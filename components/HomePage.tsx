@@ -171,7 +171,7 @@ const HomePage: React.FC<HeaderProps> = ({
               <Button
                 size="lg"
                 onClick={() => router.push('/register')}
-                className="bg-white text-[#ffd700] hover:bg-blue-50 font-semibold px-8 py-6 text-lg rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300"
+                className="bg-white text-blue-600 hover:bg-blue-50 font-semibold px-8 py-6 text-lg rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300"
               >
                 Start Registration
                 <ArrowRight className="ml-2 h-5 w-5" />

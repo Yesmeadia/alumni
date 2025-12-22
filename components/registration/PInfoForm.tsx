@@ -1,7 +1,7 @@
-// app/components/registration/PersonalInfoForm.tsx
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Select,
   SelectContent,
@@ -10,9 +10,31 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Card, CardContent } from '@/components/ui/card';
-import { AlumniData } from '@/lib/types';
-import { INDIAN_STATES } from '@/lib/types';
 import { Facebook, Instagram, Twitter, Linkedin, Globe, User, Phone, MapPin, Hash } from 'lucide-react';
+
+const INDIAN_STATES = [
+  "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh",
+  "Goa", "Gujarat", "Haryana", "Himachal Pradesh", "Jharkhand", "Karnataka",
+  "Kerala", "Madhya Pradesh", "Maharashtra", "Manipur", "Meghalaya", "Mizoram",
+  "Nagaland", "Odisha", "Punjab", "Rajasthan", "Sikkim", "Tamil Nadu",
+  "Telangana", "Tripura", "Uttar Pradesh", "Uttarakhand", "West Bengal",
+  "Andaman and Nicobar Islands", "Chandigarh", "Dadra and Nagar Haveli and Daman and Diu",
+  "Delhi", "Jammu and Kashmir", "Ladakh", "Lakshadweep", "Puducherry"
+];
+
+interface AlumniData {
+  fullName?: string;
+  mobileNumber?: string;
+  whatsappNumber?: string;
+  facebookLink?: string;
+  instagramLink?: string;
+  twitterLink?: string;
+  linkedinLink?: string;
+  address?: string;
+  place?: string;
+  state?: string;
+  pinCode?: string;
+}
 
 interface PersonalInfoFormProps {
   formData: Partial<AlumniData>;
@@ -23,15 +45,32 @@ const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({
   formData,
   onFormDataChange,
 }) => {
+  // Initialize checkbox state based on whether WhatsApp matches mobile
+  const [sameAsMobile, setSameAsMobile] = useState(() => {
+    return formData.whatsappNumber === formData.mobileNumber && !!formData.mobileNumber;
+  });
+
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement>
   ) => {
     const { name, value } = e.target;
     onFormDataChange({ [name]: value });
+
+    // If mobile number changes and checkbox is checked, update WhatsApp number
+    if (name === 'mobileNumber' && sameAsMobile) {
+      onFormDataChange({ mobileNumber: value, whatsappNumber: value });
+    }
   };
 
   const handleSelectChange = (name: string, value: string) => {
     onFormDataChange({ [name]: value });
+  };
+
+  const handleCheckboxChange = (checked: boolean) => {
+    setSameAsMobile(checked);
+    if (checked && formData.mobileNumber) {
+      onFormDataChange({ whatsappNumber: formData.mobileNumber });
+    }
   };
 
   return (
@@ -58,9 +97,9 @@ const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({
               <Input
                 id="fullName"
                 name="fullName"
-                value={formData.fullName}
+                value={formData.fullName || ''}
                 onChange={handleInputChange}
-                placeholder="John Doe"
+                placeholder="Full Name"
                 required
                 className="bg-white border-gray-300 focus:border-blue-500 focus:ring-blue-500"
               />
@@ -74,7 +113,7 @@ const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({
               <Input
                 id="mobileNumber"
                 name="mobileNumber"
-                value={formData.mobileNumber}
+                value={formData.mobileNumber || ''}
                 onChange={handleInputChange}
                 placeholder="9876543210"
                 maxLength={10}
@@ -83,7 +122,7 @@ const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({
               />
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-2 md:col-span-2">
               <Label htmlFor="whatsappNumber" className="flex items-center gap-2">
                 <Phone className="w-4 h-4 text-gray-500" />
                 WhatsApp Number <span className="text-red-500">*</span>
@@ -91,13 +130,27 @@ const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({
               <Input
                 id="whatsappNumber"
                 name="whatsappNumber"
-                value={formData.whatsappNumber}
+                value={formData.whatsappNumber || ''}
                 onChange={handleInputChange}
                 placeholder="9876543210"
                 maxLength={10}
                 required
-                className="bg-white border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                disabled={sameAsMobile}
+                className="bg-white border-gray-300 focus:border-blue-500 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
               />
+              <div className="flex items-center space-x-2 mt-2">
+                <Checkbox
+                  id="sameAsMobile"
+                  checked={sameAsMobile}
+                  onCheckedChange={handleCheckboxChange}
+                />
+                <label
+                  htmlFor="sameAsMobile"
+                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                >
+                  Same as Mobile Number
+                </label>
+              </div>
             </div>
           </div>
         </CardContent>
@@ -112,7 +165,7 @@ const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({
             </div>
             <div>
               <h3 className="text-xl font-bold text-gray-800">Social Media Profiles</h3>
-              <p className="text-gray-600 text-sm">Enter only your profile ID/username</p>
+              <p className="text-gray-600 text-sm">Optional - Enter only your profile ID/username</p>
             </div>
           </div>
           
@@ -160,7 +213,7 @@ const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({
             <div className="space-y-2">
               <div className="flex items-center gap-2">
                 <Twitter className="h-4 w-4 text-blue-400" />
-                <Label htmlFor="twitterLink">Twitter/X </Label>
+                <Label htmlFor="twitterLink">Twitter/X</Label>
               </div>
               <div className="relative">
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm pointer-events-none">
@@ -222,7 +275,7 @@ const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({
               <Input
                 id="address"
                 name="address"
-                value={formData.address}
+                value={formData.address || ''}
                 onChange={handleInputChange}
                 placeholder="House no., Street, Area, Landmark"
                 required
@@ -237,7 +290,7 @@ const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({
               <Input
                 id="place"
                 name="place"
-                value={formData.place}
+                value={formData.place || ''}
                 onChange={handleInputChange}
                 placeholder="Mumbai"
                 required
@@ -274,7 +327,7 @@ const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({
               <Input
                 id="pinCode"
                 name="pinCode"
-                value={formData.pinCode}
+                value={formData.pinCode || ''}
                 onChange={handleInputChange}
                 placeholder="400001"
                 maxLength={6}
@@ -289,4 +342,26 @@ const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({
   );
 };
 
-export default PersonalInfoForm;
+// Demo wrapper
+export default function App() {
+  const [formData, setFormData] = React.useState<Partial<AlumniData>>({});
+
+  const handleFormDataChange = (data: Partial<AlumniData>) => {
+    setFormData(prev => ({ ...prev, ...data }));
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-50 p-8">
+      <div className="max-w-4xl mx-auto">
+        <div className="mb-8 text-center">
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Alumni Registration</h1>
+          <p className="text-gray-600">Please fill in your details</p>
+        </div>
+        <PersonalInfoForm 
+          formData={formData} 
+          onFormDataChange={handleFormDataChange} 
+        />
+      </div>
+    </div>
+  );
+}

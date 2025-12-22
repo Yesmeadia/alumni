@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Loader2, ArrowLeft, ArrowRight, CheckCircle, User, GraduationCap, Briefcase, Camera, Users, Eye } from 'lucide-react';
@@ -13,6 +13,7 @@ import PhotoUploadForm from './PhotoUploadForm';
 import InvolvementForm from './InvolvementForm';
 import PreviewPDF from './PreviewPDF';
 import SuccessMessage from './SuccessMessage';
+import { AlumniData } from '@/lib/types';
 
 const MultiStepRegistration = () => {
   const [currentStep, setCurrentStep] = useState(1);
@@ -21,8 +22,11 @@ const MultiStepRegistration = () => {
   const [showSuccess, setShowSuccess] = useState(false);
   const [registrationId, setRegistrationId] = useState('');
   
+  // Ref for scrolling to top
+  const topRef = useRef<HTMLDivElement>(null);
+  
   const [formData, setFormData] = useState({
-    fullName: '',
+    fullName: '' as string,
     address: '',
     place: '',
     state: '',
@@ -37,12 +41,12 @@ const MultiStepRegistration = () => {
     yearOfGraduation: '',
     lastClassAttended: '',
     otherClass: '',
-    currentJobTitle: '',
-    companyName: '',
-    qualification: '',
+    currentJobTitle: '' as string,
+    companyName: '' as string,
+    qualification: '' as string,
     additionalQualification: '',
-    stayInvolved: [],
-    messageToTeacher: '',
+    stayInvolved: [] as string[],
+    messageToTeacher: '' as string,
   });
   
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -59,7 +63,16 @@ const MultiStepRegistration = () => {
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
-  const handleFormDataChange = (data: any) => {
+  // Scroll to top helper function
+  const scrollToTop = () => {
+    if (topRef.current) {
+      topRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } else {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
+  const handleFormDataChange = (data: Partial<AlumniData>) => {
     setFormData({ ...formData, ...data });
   };
 
@@ -191,15 +204,18 @@ const MultiStepRegistration = () => {
       return;
     }
     setCurrentStep(currentStep + 1);
+    scrollToTop();
   };
 
   const handleBack = () => {
     setCurrentStep(currentStep - 1);
+    scrollToTop();
   };
 
   const handleStepClick = (stepNumber: number) => {
     if (stepNumber < currentStep) {
       setCurrentStep(stepNumber);
+      scrollToTop();
     }
   };
 
@@ -218,6 +234,7 @@ const MultiStepRegistration = () => {
       if (result.success) {
         setRegistrationId(result.alumniId);
         setShowSuccess(true);
+        scrollToTop();
         toast.success(result.message);
       }
     } catch (error: any) {
@@ -275,7 +292,7 @@ const MultiStepRegistration = () => {
       case 2:
         return (
           <EducationalInfoForm
-            formData={formData}
+            formData={formData as AlumniData}
             onFormDataChange={handleFormDataChange}
           />
         );
@@ -325,7 +342,7 @@ const MultiStepRegistration = () => {
   }
 
   return (
-    <div className="min-h-screen bg-white">
+    <div ref={topRef} className="min-h-screen bg-white">
       {/* Header Banner */}
       <div className="relative overflow-hidden rounded-b-3xl shadow-2xl bg-gradient-to-r from-[#1a237e] via-[#283593] to-[#3949ab]">
         <div className="absolute inset-0 opacity-10">
@@ -491,7 +508,10 @@ const MultiStepRegistration = () => {
                         <>
                           {currentStep === 5 && (
                             <Button
-                              onClick={() => setCurrentStep(6)}
+                              onClick={() => {
+                                setCurrentStep(6);
+                                scrollToTop();
+                              }}
                               variant="outline"
                               className="w-full sm:w-auto border-2 rounded-xl px-6 py-2"
                             >
