@@ -77,9 +77,20 @@ export const JK_SCHOOLS_BY_DISTRICT = {
   'Poonch': [
     'Raza Ul Uloom Islamia Higher Secondary - Poonch',
     'Yaseen English School - Terwan',
-    'Yaseen English School - Maldiyalan ',
+    'Yaseen English School - Maldiyalan',
     'Jameel Public Academy - Daradullian',
     'Yaseen English School - Chandak',
+    'Yaseen English School - Galhuta Harni',
+    'Yaseen English School - Mendhar',
+    'Yaseen English school - Serikhawaja',
+    'Yaseen English School - Dhundak',
+    'Yaseen English School - Surankote',
+    'Yaseen English School - Trananwali',
+    'YES Model Institute of Education - Drogian',
+    'YCIS - Dhundak',
+    'YCIS - Sangiote',
+
+
   ],
 };
 
@@ -89,45 +100,39 @@ export const ALL_JK_SCHOOLS = Object.values(JK_SCHOOLS_BY_DISTRICT).flat();
 // Group schools by state (for non-JK states)
 export const YES_INDIA_SCHOOLS_BY_STATE = {
   'Delhi': [
-    'YES INDIA School - Delhi Main Campus',
-    'YES INDIA School - Delhi West',
-    'YES INDIA School - Delhi South',
   ],
   'Rajasthan': [
-    'YES INDIA School - Jaipur',
-    'YES INDIA School - Jodhpur',
-    'YES INDIA School - Udaipur',
+    'YESSARWAR SHIKSHAN SANSTHAN SR.SEC SCHOOL - SERWA',
+    'YES DESERT BLOOM SCHOOL - PHALODI',
+    'YES PUBLIC ENGLISH MEDIUM SCHOOL - BALOTRA',
+    'YES EDU HOME BOYS HOSTEL - SERWA',
+    'YES ENGLISH SCHOOL SUJON KA NIVAN - SUJA SHARIF',
+    'YES FAIZ-E-SIDDIQUIA SR.SEC SCHOOL - SUJA SHARIF',
   ],
   'Bihar': [
-    'YES INDIA School - Patna',
-    'YES INDIA School - Gaya',
-    'YES INDIA School - Muzaffarpur',
+    'YES HASAN FATIMA ENGLISH SCHOOL - BISFI',
   ],
   'West Bengal': [
-    'YES INDIA School - Kolkata Main',
-    'YES INDIA School - Kolkata South',
-    'YES INDIA School - Howrah',
+    'YASEEN ENGLISH SCHOOL - KARISHAL',
+    'YES INDIA PUBLIC SCHOOL - Mathabhanga',
   ],
   'Maharashtra': [
-    'YES INDIA School - Mumbai Main',
-    'YES INDIA School - Mumbai West',
-    'YES INDIA School - Pune',
-    'YES INDIA School - Nagpur',
+    'YES PA INAMDAR ENGLISH MEDIUM SCHOOL - AHMAD NAGAR',
+    'YES INDIA PUBLIC SCHOOL - CHALISGAON',
+    'RAZA ENGLISH MEDIUM SCHOOL  - KHAIRGAON',
   ],
   'Andhra Pradesh': [
-    'YES INDIA School - Visakhapatnam',
-    'YES INDIA School - Vijayawada',
-    'YES INDIA School - Tirupati',
+    'YASEEN ENGLISH MEDIUM SCHOOL - ANANTAPUR',
+    'YASEEN COLLEGE OF INTEGRATED STUDIES - TADIPATRI'
   ],
   'Karnataka': [
-    'YES INDIA School - Bangalore Main',
-    'YES INDIA School - Bangalore North',
-    'YES INDIA School - Mysore',
+    'YES IPS MALEBENNURE - MALEBENNUR',
+    'YES SOOFI ENGLISH SCHOOL - LAXMESHWAR',
+    'YES SIR HIND ENGLISH MEDIUM SCHOOL  - UDUPI',
   ],
   'Kerala': [
-    'YES INDIA School - Kochi',
-    'YES INDIA School - Thiruvananthapuram',
-    'YES INDIA School - Kozhikode',
+    'YESUQ HS SCHOOL  - MONGAM',
+    'YESUQ DAWA - MONGAM'
   ],
 };
 

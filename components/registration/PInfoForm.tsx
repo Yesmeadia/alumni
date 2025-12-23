@@ -101,12 +101,26 @@ const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({
                 name="mobileNumber"
                 value={formData.mobileNumber || ''}
                 onChange={handleInputChange}
-                placeholder="9876543210"
+                placeholder="Mobile Number"
                 maxLength={10}
                 required
                 className="bg-white border-gray-300 focus:border-blue-500 focus:ring-blue-500"
               />
             </div>
+            <div className="flex items-center space-x-2 mt-2 ">
+                <Checkbox
+                  id="sameAsMobile"
+                  checked={sameAsMobile}
+                  onCheckedChange={handleCheckboxChange}
+                  className=" border border-gray-400 data-[state=checked]:border-blue-600 data-[state=checked]:bg-blue-600"
+                />
+                <label
+                  htmlFor="sameAsMobile"
+                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                >
+                  Same as Mobile Number
+                </label>
+              </div>
 
             <div className="space-y-2 md:col-span-2">
               <Label htmlFor="whatsappNumber" className="flex items-center gap-2">
@@ -118,25 +132,12 @@ const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({
                 name="whatsappNumber"
                 value={formData.whatsappNumber || ''}
                 onChange={handleInputChange}
-                placeholder="9876543210"
+                placeholder="WhatsApp Numbers"
                 maxLength={10}
                 required
                 disabled={sameAsMobile}
                 className="bg-white border-gray-300 focus:border-blue-500 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
               />
-              <div className="flex items-center space-x-2 mt-2">
-                <Checkbox
-                  id="sameAsMobile"
-                  checked={sameAsMobile}
-                  onCheckedChange={handleCheckboxChange}
-                />
-                <label
-                  htmlFor="sameAsMobile"
-                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
-                >
-                  Same as Mobile Number
-                </label>
-              </div>
             </div>
           </div>
         </CardContent>
@@ -323,7 +324,7 @@ const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({
                 name="place"
                 value={formData.place || ''}
                 onChange={handleInputChange}
-                placeholder="Mumbai"
+                placeholder="Place"
                 required
                 className="bg-white border-gray-300 focus:border-green-500 focus:ring-green-500"
               />
@@ -339,7 +340,7 @@ const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({
                 name="pinCode"
                 value={formData.pinCode || ''}
                 onChange={handleInputChange}
-                placeholder="400001"
+                placeholder="Pin code"
                 maxLength={6}
                 required
                 className="bg-white border-gray-300 focus:border-green-500 focus:ring-green-500"
