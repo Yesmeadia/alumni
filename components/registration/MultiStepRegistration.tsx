@@ -25,11 +25,13 @@ const MultiStepRegistration = () => {
   // Ref for scrolling to top
   const topRef = useRef<HTMLDivElement>(null);
   
-  const [formData, setFormData] = useState({
-    fullName: '' as string,
+  // Update formData to match AlumniData interface
+  const [formData, setFormData] = useState<Partial<AlumniData>>({
+    fullName: '',
     address: '',
     place: '',
     state: '',
+    district: '',
     pinCode: '',
     mobileNumber: '',
     whatsappNumber: '',
@@ -37,16 +39,26 @@ const MultiStepRegistration = () => {
     instagramLink: '',
     twitterLink: '',
     linkedinLink: '',
+    otherSocialLink: '',
     schoolAttended: '',
     yearOfGraduation: '',
     lastClassAttended: '',
     otherClass: '',
-    currentJobTitle: '' as string,
-    companyName: '' as string,
-    qualification: '' as string,
+    currentJobTitle: '',
+    companyName: '',
+    qualification: '',
     additionalQualification: '',
-    stayInvolved: [] as string[],
-    messageToTeacher: '' as string,
+    professionalInterests: '',
+    yearsOfExperience: '',
+    areasOfExpertise: '',
+    industry: '',
+    stayInvolved: [],
+    messageToTeacher: '',
+    // These fields will be set when submitting
+    status: 'pending',
+    registrationDate: new Date().toISOString().split('T')[0],
+    photoURL: '',
+    createdAt: Date.now(),
   });
   
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -73,7 +85,8 @@ const MultiStepRegistration = () => {
   };
 
   const handleFormDataChange = (data: Partial<AlumniData>) => {
-    setFormData({ ...formData, ...data });
+    console.log('Form data changed:', data);
+    setFormData(prev => ({ ...prev, ...data }));
   };
 
   const handleImageChange = (file: File | null, preview: string) => {
@@ -121,39 +134,73 @@ const MultiStepRegistration = () => {
   ];
 
   const validateCurrentStep = (): boolean => {
+    console.log('Validating step:', currentStep);
+    console.log('Form data:', {
+      fullName: formData.fullName,
+      mobileNumber: formData.mobileNumber,
+      whatsappNumber: formData.whatsappNumber,
+      address: formData.address,
+      place: formData.place,
+      state: formData.state,
+      district: formData.district,
+      pinCode: formData.pinCode
+    });
+    
     switch (currentStep) {
-      case 1:
+      case 1: // Personal Info
+        // Validate full name
         if (!formData.fullName?.trim()) {
           toast.error('Please enter your full name');
           return false;
         }
-        if (!/^\d{10}$/.test(formData.mobileNumber || '')) {
+        
+        // Validate mobile number
+        if (!formData.mobileNumber || !/^\d{10}$/.test(formData.mobileNumber)) {
           toast.error('Please enter a valid 10-digit mobile number');
           return false;
         }
-        if (!/^\d{10}$/.test(formData.whatsappNumber || '')) {
+        
+        // Validate WhatsApp number
+        if (!formData.whatsappNumber || !/^\d{10}$/.test(formData.whatsappNumber)) {
           toast.error('Please enter a valid 10-digit WhatsApp number');
           return false;
         }
+        
+        // Validate address
         if (!formData.address?.trim()) {
           toast.error('Please enter your address');
           return false;
         }
+        
+        // Validate place
         if (!formData.place?.trim()) {
-          toast.error('Please enter your city');
+          toast.error('Please enter your city/town');
           return false;
         }
+        
+        // Validate state
         if (!formData.state) {
           toast.error('Please select your state');
           return false;
         }
-        if (!/^\d{6}$/.test(formData.pinCode || '')) {
+        
+        if (formData.state === 'Jammu and Kashmir') {
+          console.log('Jammu & Kashmir detected, checking district:', formData.district);
+          if (!formData.district || formData.district.trim() === '') {
+            toast.error('Please select your district (required for Jammu & Kashmir)');
+            return false;
+          }
+        }
+        
+        // Validate pin code
+        if (!formData.pinCode || !/^\d{6}$/.test(formData.pinCode)) {
           toast.error('Please enter a valid 6-digit pin code');
           return false;
         }
+        
+        console.log('Step 1 validation passed!');
         return true;
-
-      case 2:
+      case 2: 
         if (!formData.schoolAttended) {
           toast.error('Please select the school you attended');
           return false;
@@ -170,28 +217,19 @@ const MultiStepRegistration = () => {
           toast.error('Please specify the class name');
           return false;
         }
-        if (!formData.qualification?.trim()) {
-          toast.error('Please enter your current qualification');
-          return false;
-        }
+        console.log('Step 2 validation passed');
         return true;
 
-      case 3:
-        if (!formData.currentJobTitle?.trim()) {
-          toast.error('Please enter your current job title');
-          return false;
-        }
-        if (!formData.companyName?.trim()) {
-          toast.error('Please enter your company name');
-          return false;
-        }
+      case 3: // Professional Info
+        console.log('Step 3 validation passed');
         return true;
 
-      case 4:
-        if (!imageFile) {
-          toast.error('Please upload your passport size photo');
-          return false;
-        }
+      case 4: // Photo Upload
+        console.log('Step 4 validation passed');
+        return true;
+
+      case 5: // Involvement - All fields are optional
+        console.log('Step 5 validation passed (all optional)');
         return true;
 
       default:
@@ -200,9 +238,15 @@ const MultiStepRegistration = () => {
   };
 
   const handleNext = () => {
+    console.log('Next button clicked for step:', currentStep);
+    console.log('Current form data:', formData);
+    
     if (!validateCurrentStep()) {
+      console.log('Validation failed for step:', currentStep);
       return;
     }
+    
+    console.log('Validation passed, moving to step:', currentStep + 1);
     setCurrentStep(currentStep + 1);
     scrollToTop();
   };
@@ -228,14 +272,56 @@ const MultiStepRegistration = () => {
     setLoading(true);
     
     try {
+      // Create complete alumni data object
+      const completeAlumniData: AlumniData = {
+        ...formData,
+        id: '', // Will be generated by Firebase
+        fullName: formData.fullName || '',
+        address: formData.address || '',
+        place: formData.place || '',
+        state: formData.state || '',
+        district: formData.district || '',
+        pinCode: formData.pinCode || '',
+        mobileNumber: formData.mobileNumber || '',
+        whatsappNumber: formData.whatsappNumber || '',
+        status: 'pending',
+        registrationDate: new Date().toISOString().split('T')[0],
+        socialMediaLink: '', // Keep empty or combine from other fields
+        schoolAttended: formData.schoolAttended || '',
+        yearOfGraduation: formData.yearOfGraduation || '',
+        lastClassAttended: formData.lastClassAttended || '',
+        otherClass: formData.otherClass || '',
+        currentJobTitle: formData.currentJobTitle || '',
+        companyName: formData.companyName || '',
+        qualification: formData.qualification || '',
+        additionalQualification: formData.additionalQualification || '',
+        professionalInterests: formData.professionalInterests || '',
+        yearsOfExperience: formData.yearsOfExperience || '',
+        areasOfExpertise: formData.areasOfExpertise || '',
+        industry: formData.industry || '',
+        stayInvolved: formData.stayInvolved || [],
+        messageToTeacher: formData.messageToTeacher || '',
+        photoURL: '', // Will be set by Firebase
+        createdAt: Date.now(),
+        facebookLink: formData.facebookLink || '',
+        instagramLink: formData.instagramLink || '',
+        twitterLink: formData.twitterLink || '',
+        linkedinLink: formData.linkedinLink || '',
+        otherSocialLink: formData.otherSocialLink || '',
+      };
+
+      console.log('Submitting alumni data:', completeAlumniData);
+      
       // Register alumni with Firebase
-      const result = await registerAlumni(formData, imageFile);
+      const result = await registerAlumni(completeAlumniData, imageFile);
       
       if (result.success) {
         setRegistrationId(result.alumniId);
         setShowSuccess(true);
         scrollToTop();
         toast.success(result.message);
+      } else {
+        toast.error(result.message || 'Registration failed');
       }
     } catch (error: any) {
       console.error('Registration error:', error);
@@ -252,6 +338,7 @@ const MultiStepRegistration = () => {
       address: '',
       place: '',
       state: '',
+      district: '',
       pinCode: '',
       mobileNumber: '',
       whatsappNumber: '',
@@ -259,6 +346,7 @@ const MultiStepRegistration = () => {
       instagramLink: '',
       twitterLink: '',
       linkedinLink: '',
+      otherSocialLink: '',
       schoolAttended: '',
       yearOfGraduation: '',
       lastClassAttended: '',
@@ -267,8 +355,16 @@ const MultiStepRegistration = () => {
       companyName: '',
       qualification: '',
       additionalQualification: '',
+      professionalInterests: '',
+      yearsOfExperience: '',
+      areasOfExpertise: '',
+      industry: '',
       stayInvolved: [],
       messageToTeacher: '',
+      status: 'pending',
+      registrationDate: new Date().toISOString().split('T')[0],
+      photoURL: '',
+      createdAt: Date.now(),
     });
     setImageFile(null);
     setImagePreview('');
@@ -292,7 +388,7 @@ const MultiStepRegistration = () => {
       case 2:
         return (
           <EducationalInfoForm
-            formData={formData as AlumniData}
+            formData={formData}
             onFormDataChange={handleFormDataChange}
           />
         );
@@ -335,7 +431,7 @@ const MultiStepRegistration = () => {
     return (
       <SuccessMessage
         alumniId={registrationId}
-        fullName={formData.fullName}
+        fullName={formData.fullName || ''}
         onGoHome={handleGoHome}
       />
     );
@@ -509,6 +605,7 @@ const MultiStepRegistration = () => {
                           {currentStep === 5 && (
                             <Button
                               onClick={() => {
+                                // Skip validation for preview step
                                 setCurrentStep(6);
                                 scrollToTop();
                               }}

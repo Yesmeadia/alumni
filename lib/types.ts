@@ -4,6 +4,7 @@ export interface AlumniData {
   address: string;
   place: string;
   state: string;
+  district?: string;
   pinCode: string;
   mobileNumber: string;
   whatsappNumber: string;
@@ -41,16 +42,52 @@ export const LAST_CLASS_OPTIONS = [
 ];
 
 export const GRADUATION_YEARS = Array.from(
-  { length: 30 },
+  { length: 19 },
   (_, i) => (new Date().getFullYear() - i).toString()
 );
 
-// Group schools by state
-export const YES_INDIA_SCHOOLS_BY_STATE = {
-  'Jammu and Kashmir': [
-    'YES INDIA School - Srinagar',
-    'YES INDIA School - Jammu',
+// Jammu and Kashmir districts
+export const JK_DISTRICTS = [
+  'Anantnag', 'Budgam', 'Jammu', 'Poonch',
+  'Rajouri', 'Srinagar',
+];
+
+// Schools organized by district in Jammu and Kashmir
+export const JK_SCHOOLS_BY_DISTRICT = {
+  'Srinagar': [
+    'Yaseen English School - Maloora',
+
   ],
+  'Jammu': [
+    'New Taj Public High School - Bathindi',
+    'Yaseen College of Integrated Studies - Sujuma'
+
+  ],
+  'Anantnag': [
+    'Darul Uloom Jamia Zainul Islam - Pahalgham',
+  ],
+  'Budgam': [
+    'Solah Idarathul Aloom School - Narbal',
+  ],
+  'Rajouri': [
+    'DS Educational Institute  - Rajouri',
+    'New Yaseen English School - Rajouri',
+    'Yaseen English School - Shahdara Shareif',
+  ],
+  'Poonch': [
+    'Raza Ul Uloom Islamia Higher Secondary - Poonch',
+    'Yaseen English School - Terwan',
+    'Yaseen English School - Maldiyalan ',
+    'Jameel Public Academy - Daradullian',
+    'Yaseen English School - Chandak',
+  ],
+};
+
+// Get all JK schools
+export const ALL_JK_SCHOOLS = Object.values(JK_SCHOOLS_BY_DISTRICT).flat();
+
+// Group schools by state (for non-JK states)
+export const YES_INDIA_SCHOOLS_BY_STATE = {
   'Delhi': [
     'YES INDIA School - Delhi Main Campus',
     'YES INDIA School - Delhi West',
@@ -94,7 +131,10 @@ export const YES_INDIA_SCHOOLS_BY_STATE = {
   ],
 };
 
-export const ALL_YES_INDIA_SCHOOLS = Object.values(YES_INDIA_SCHOOLS_BY_STATE).flat();
+export const ALL_YES_INDIA_SCHOOLS = [
+  ...Object.values(YES_INDIA_SCHOOLS_BY_STATE).flat(),
+  ...ALL_JK_SCHOOLS
+];
 
 export const INDIAN_STATES = [
   'Jammu and Kashmir',
@@ -114,3 +154,25 @@ export const INVOLVEMENT_OPTIONS = [
   'Fundraising & Donations',
   'Alumni Network Events',
 ];
+
+export interface FormComponentProps {
+  formData: AlumniData;
+  onFormDataChange: (data: Partial<AlumniData>) => void;
+}
+
+export interface PhotoUploadProps {
+  imageFile: File | null;
+  imagePreview: string;
+  onImageChange: (file: File | null, preview: string) => void;
+}
+
+export interface PreviewPDFProps {
+  formData: AlumniData;
+  imagePreview: string;
+}
+
+export interface SuccessMessageProps {
+  alumniId: string;
+  fullName: string;
+  onGoHome: () => void;
+}

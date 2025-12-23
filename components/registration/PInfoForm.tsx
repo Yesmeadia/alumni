@@ -1,4 +1,6 @@
-import React, { useState, useEffect } from 'react';
+'use client';
+
+import React, { useState} from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -10,31 +12,8 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Card, CardContent } from '@/components/ui/card';
+import { INDIAN_STATES, JK_DISTRICTS, AlumniData } from '@/lib/types';
 import { Facebook, Instagram, Twitter, Linkedin, Globe, User, Phone, MapPin, Hash } from 'lucide-react';
-
-const INDIAN_STATES = [
-  "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh",
-  "Goa", "Gujarat", "Haryana", "Himachal Pradesh", "Jharkhand", "Karnataka",
-  "Kerala", "Madhya Pradesh", "Maharashtra", "Manipur", "Meghalaya", "Mizoram",
-  "Nagaland", "Odisha", "Punjab", "Rajasthan", "Sikkim", "Tamil Nadu",
-  "Telangana", "Tripura", "Uttar Pradesh", "Uttarakhand", "West Bengal",
-  "Andaman and Nicobar Islands", "Chandigarh", "Dadra and Nagar Haveli and Daman and Diu",
-  "Delhi", "Jammu and Kashmir", "Ladakh", "Lakshadweep", "Puducherry"
-];
-
-interface AlumniData {
-  fullName?: string;
-  mobileNumber?: string;
-  whatsappNumber?: string;
-  facebookLink?: string;
-  instagramLink?: string;
-  twitterLink?: string;
-  linkedinLink?: string;
-  address?: string;
-  place?: string;
-  state?: string;
-  pinCode?: string;
-}
 
 interface PersonalInfoFormProps {
   formData: Partial<AlumniData>;
@@ -45,7 +24,6 @@ const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({
   formData,
   onFormDataChange,
 }) => {
-  // Initialize checkbox state based on whether WhatsApp matches mobile
   const [sameAsMobile, setSameAsMobile] = useState(() => {
     return formData.whatsappNumber === formData.mobileNumber && !!formData.mobileNumber;
   });
@@ -54,24 +32,32 @@ const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({
     e: React.ChangeEvent<HTMLInputElement>
   ) => {
     const { name, value } = e.target;
-    onFormDataChange({ [name]: value });
+    onFormDataChange({ [name]: value } as Partial<AlumniData>);
 
-    // If mobile number changes and checkbox is checked, update WhatsApp number
     if (name === 'mobileNumber' && sameAsMobile) {
-      onFormDataChange({ mobileNumber: value, whatsappNumber: value });
+      onFormDataChange({ mobileNumber: value, whatsappNumber: value } as Partial<AlumniData>);
     }
   };
 
-  const handleSelectChange = (name: string, value: string) => {
-    onFormDataChange({ [name]: value });
+  const handleSelectChange = (name: keyof AlumniData, value: string) => {
+    const updateData: Partial<AlumniData> = { [name]: value };
+    
+    // Clear district if state changes and is not J&K
+    if (name === 'state' && value !== 'Jammu and Kashmir') {
+      updateData.district = '';
+    }
+    
+    onFormDataChange(updateData);
   };
 
   const handleCheckboxChange = (checked: boolean) => {
     setSameAsMobile(checked);
     if (checked && formData.mobileNumber) {
-      onFormDataChange({ whatsappNumber: formData.mobileNumber });
+      onFormDataChange({ whatsappNumber: formData.mobileNumber } as Partial<AlumniData>);
     }
   };
+
+  const showDistrictField = formData.state === 'Jammu and Kashmir';
 
   return (
     <div className="space-y-8">
@@ -284,26 +270,11 @@ const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="place">
-                City/Town <span className="text-red-500">*</span>
-              </Label>
-              <Input
-                id="place"
-                name="place"
-                value={formData.place || ''}
-                onChange={handleInputChange}
-                placeholder="Mumbai"
-                required
-                className="bg-white border-gray-300 focus:border-green-500 focus:ring-green-500"
-              />
-            </div>
-
-            <div className="space-y-2">
               <Label htmlFor="state">
                 State <span className="text-red-500">*</span>
               </Label>
               <Select
-                value={formData.state}
+                value={formData.state || ''}
                 onValueChange={(value) => handleSelectChange('state', value)}
               >
                 <SelectTrigger className="bg-white border-gray-300 focus:border-green-500 focus:ring-green-500">
@@ -317,6 +288,45 @@ const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({
                   ))}
                 </SelectContent>
               </Select>
+            </div>
+
+            {showDistrictField && (
+              <div className="space-y-2">
+                <Label htmlFor="district">
+                  District <span className="text-red-500">*</span>
+                  <span className="text-xs text-gray-500 ml-1">(Required for Jammu & Kashmir)</span>
+                </Label>
+                <Select
+                  value={formData.district || ''}
+                  onValueChange={(value) => handleSelectChange('district', value)}
+                >
+                  <SelectTrigger className="bg-white border-gray-300 focus:border-green-500 focus:ring-green-500">
+                    <SelectValue placeholder="Select your district" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {JK_DISTRICTS.map((district) => (
+                      <SelectItem key={district} value={district} className="focus:bg-green-50">
+                        {district}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
+            <div className="space-y-2">
+              <Label htmlFor="place">
+                City/Town <span className="text-red-500">*</span>
+              </Label>
+              <Input
+                id="place"
+                name="place"
+                value={formData.place || ''}
+                onChange={handleInputChange}
+                placeholder="Mumbai"
+                required
+                className="bg-white border-gray-300 focus:border-green-500 focus:ring-green-500"
+              />
             </div>
 
             <div className="space-y-2">
@@ -342,26 +352,4 @@ const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({
   );
 };
 
-// Demo wrapper
-export default function App() {
-  const [formData, setFormData] = React.useState<Partial<AlumniData>>({});
-
-  const handleFormDataChange = (data: Partial<AlumniData>) => {
-    setFormData(prev => ({ ...prev, ...data }));
-  };
-
-  return (
-    <div className="min-h-screen bg-gray-50 p-8">
-      <div className="max-w-4xl mx-auto">
-        <div className="mb-8 text-center">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Alumni Registration</h1>
-          <p className="text-gray-600">Please fill in your details</p>
-        </div>
-        <PersonalInfoForm 
-          formData={formData} 
-          onFormDataChange={handleFormDataChange} 
-        />
-      </div>
-    </div>
-  );
-}
+export default PersonalInfoForm;

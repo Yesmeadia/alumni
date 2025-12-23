@@ -1,6 +1,5 @@
 // app/login/page.tsx
 import LoginForm from '@/components/LoginForm';
-import Footer from '@/components/Footer';
 
 
 export const metadata = {
@@ -12,7 +11,6 @@ export default function LoginPage() {
   return (
     <>
       <LoginForm />
-      <Footer />
     </>
   );
 }

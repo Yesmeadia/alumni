@@ -13,6 +13,8 @@ import { Card, CardContent } from '@/components/ui/card';
 import { AlumniData } from '@/lib/types';
 import {
   YES_INDIA_SCHOOLS_BY_STATE,
+  JK_SCHOOLS_BY_DISTRICT,
+  JK_DISTRICTS,
   ALL_YES_INDIA_SCHOOLS,
   GRADUATION_YEARS,
   LAST_CLASS_OPTIONS,
@@ -33,23 +35,39 @@ const EducationalInfoForm: React.FC<EducationalInfoFormProps> = ({
     formData.lastClassAttended === 'Other'
   );
 
-  // Derive available schools from state - no need for separate state variable
+  const isJammuKashmir = formData.state === 'Jammu and Kashmir';
+
+  // Derive available schools based on state and district
   const availableSchools = useMemo(() => {
-    if (formData.state && YES_INDIA_SCHOOLS_BY_STATE[formData.state as keyof typeof YES_INDIA_SCHOOLS_BY_STATE]) {
+    if (formData.state === 'Jammu and Kashmir') {
+      // For J&K, show schools based on district
+      if (formData.district && JK_SCHOOLS_BY_DISTRICT[formData.district as keyof typeof JK_SCHOOLS_BY_DISTRICT]) {
+        return JK_SCHOOLS_BY_DISTRICT[formData.district as keyof typeof JK_SCHOOLS_BY_DISTRICT];
+      }
+      // If district not selected, return empty array
+      return [];
+    } else if (formData.state && YES_INDIA_SCHOOLS_BY_STATE[formData.state as keyof typeof YES_INDIA_SCHOOLS_BY_STATE]) {
+      // For other states, show schools based on state
       return YES_INDIA_SCHOOLS_BY_STATE[formData.state as keyof typeof YES_INDIA_SCHOOLS_BY_STATE];
     }
     return ALL_YES_INDIA_SCHOOLS;
-  }, [formData.state]);
+  }, [formData.state, formData.district]);
 
-  // Clear school if state changes and school is not in the new state
+  // Clear school if state or district changes and school is not available
   useEffect(() => {
-    if (formData.schoolAttended && formData.state) {
-      const schoolsInState = YES_INDIA_SCHOOLS_BY_STATE[formData.state as keyof typeof YES_INDIA_SCHOOLS_BY_STATE] || [];
-      if (!schoolsInState.includes(formData.schoolAttended)) {
+    if (formData.schoolAttended && availableSchools.length > 0) {
+      if (!availableSchools.includes(formData.schoolAttended)) {
         onFormDataChange({ schoolAttended: '' });
       }
     }
-  }, [formData.state, formData.schoolAttended, onFormDataChange]);
+  }, [formData.state, formData.district, formData.schoolAttended, availableSchools, onFormDataChange]);
+
+  // Clear district if state changes from J&K to another state
+  useEffect(() => {
+    if (formData.state && formData.state !== 'Jammu and Kashmir' && formData.district) {
+      onFormDataChange({ district: '' });
+    }
+  }, [formData.state, formData.district, onFormDataChange]);
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement>
@@ -59,7 +77,7 @@ const EducationalInfoForm: React.FC<EducationalInfoFormProps> = ({
   };
 
   const handleSelectChange = (name: string, value: string) => {
-    console.log(`Select change - ${name}: ${value}`); // Debug log
+    console.log(`Select change - ${name}: ${value}`);
     
     if (name === 'lastClassAttended') {
       const isOther = value === 'Other';
@@ -72,10 +90,35 @@ const EducationalInfoForm: React.FC<EducationalInfoFormProps> = ({
       } else {
         onFormDataChange({ [name]: value });
       }
+    } else if (name === 'state') {
+      // Clear district and school when state changes
+      onFormDataChange({ 
+        state: value,
+        district: '',
+        schoolAttended: ''
+      });
+    } else if (name === 'district') {
+      // Clear school when district changes
+      onFormDataChange({ 
+        district: value,
+        schoolAttended: ''
+      });
     } else {
       onFormDataChange({ [name]: value });
     }
   };
+
+  const getSchoolPlaceholder = () => {
+    if (!formData.state) {
+      return "Please select state first";
+    }
+    if (isJammuKashmir && !formData.district) {
+      return "Please select district first";
+    }
+    return "Select your school";
+  };
+
+  const isSchoolSelectDisabled = !formData.state || (isJammuKashmir && !formData.district);
 
   return (
     <div className="space-y-8">
@@ -102,19 +145,43 @@ const EducationalInfoForm: React.FC<EducationalInfoFormProps> = ({
                 value={formData.state || ''}
                 onValueChange={(value) => handleSelectChange('state', value)}
               >
-                <SelectTrigger className="bg-white border-gray-300 focus:border-green-500 focus:ring-green-500">
+                <SelectTrigger className="bg-white border-gray-300 focus:border-blue-500 focus:ring-blue-500">
                   <SelectValue placeholder="Select your state" />
                 </SelectTrigger>
                 <SelectContent>
                   {INDIAN_STATES.map((state) => (
-                    <SelectItem key={state} value={state} className="focus:bg-green-50">
+                    <SelectItem key={state} value={state} className="focus:bg-blue-50">
                       {state}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
-            
+
+            {isJammuKashmir && (
+              <div className="space-y-2">
+                <Label htmlFor="district" className="flex items-center gap-2">
+                  <School className="w-4 h-4 text-gray-500" />
+                  District <span className="text-red-500">*</span>
+                </Label>
+                <Select
+                  value={formData.district || ''}
+                  onValueChange={(value) => handleSelectChange('district', value)}
+                >
+                  <SelectTrigger className="bg-white border-gray-300 focus:border-blue-500 focus:ring-blue-500">
+                    <SelectValue placeholder="Select your district" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {JK_DISTRICTS.map((district) => (
+                      <SelectItem key={district} value={district} className="focus:bg-blue-50">
+                        {district}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
             <div className="space-y-2">
               <Label htmlFor="schoolAttended" className="flex items-center gap-2">
                 <School className="w-4 h-4 text-gray-500" />
@@ -123,24 +190,28 @@ const EducationalInfoForm: React.FC<EducationalInfoFormProps> = ({
               <Select
                 value={formData.schoolAttended || ''}
                 onValueChange={(value) => handleSelectChange('schoolAttended', value)}
-                disabled={!formData.state}
+                disabled={isSchoolSelectDisabled}
               >
-                <SelectTrigger className="bg-white border-gray-300 focus:border-blue-500 focus:ring-blue-500">
-                  <SelectValue 
-                    placeholder={formData.state ? "Select your school" : "Please select state first"}
-                  />
+                <SelectTrigger className="bg-white border-gray-300 focus:border-blue-500 focus:ring-blue-500 h-auto min-h-[40px] md:h-10 [&>span]:block [&>span]:whitespace-normal [&>span]:md:whitespace-nowrap [&>span]:md:truncate [&>span]:w-full [&>span]:text-left [&>span]:py-1 [&>span]:leading-tight">
+                  <SelectValue placeholder={getSchoolPlaceholder()} />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="max-w-[90vw]">
                   {availableSchools.map((school) => (
-                    <SelectItem key={school} value={school} className="focus:bg-blue-50">
-                      {school}
+                    <SelectItem 
+                      key={school} 
+                      value={school} 
+                      className="focus:bg-blue-50 whitespace-normal py-3 leading-snug"
+                    >
+                      <span className="block break-words">{school}</span>
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
-              {!formData.state && (
+              {isSchoolSelectDisabled && (
                 <p className="text-sm text-gray-500 mt-1">
-                  Please select a state to see available schools
+                  {!formData.state 
+                    ? "Please select a state to see available schools"
+                    : "Please select a district to see available schools"}
                 </p>
               )}
             </div>
@@ -226,7 +297,7 @@ const EducationalInfoForm: React.FC<EducationalInfoFormProps> = ({
             <div className="space-y-2">
               <Label htmlFor="qualification" className="flex items-center gap-2">
                 <GraduationCap className="w-4 h-4 text-gray-500" />
-                Highest Qualification <span className="text-red-500">*</span>
+                Highest Qualification
               </Label>
               <Input
                 id="qualification"
@@ -234,13 +305,12 @@ const EducationalInfoForm: React.FC<EducationalInfoFormProps> = ({
                 value={formData.qualification || ''}
                 onChange={handleInputChange}
                 placeholder="e.g., B.Tech, MBA, M.Sc, BA, 12th Pass"
-                required
                 className="bg-white border-gray-300 focus:border-purple-500 focus:ring-purple-500"
               />
             </div>
             
             <div className="space-y-2">
-              <Label className="flex items-center gap-2">
+              <Label htmlFor="additionalQualification" className="flex items-center gap-2">
                 <GraduationCap className="w-4 h-4 text-gray-500" />
                 Additional Qualifications
               </Label>

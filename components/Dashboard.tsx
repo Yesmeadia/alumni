@@ -27,6 +27,8 @@ import {
   TrendingUp,
   Grid3x3,
   List,
+  Filter,
+  Calendar,
 } from 'lucide-react';
 
 // Import components
@@ -40,8 +42,10 @@ import LoadingSpinner from '@/components/Dashboard/LoadingSpinner';
 // Import the export utility
 import { exportAlumniToCSV } from '@/utils/exportData';
 
-interface AlumniWithId extends AlumniData {
-  id: string;
+// This represents what we get from Firebase - the key is separate from data
+interface AlumniWithId {
+  id: string; // Firebase push key
+  data: AlumniData; // The actual alumni data
 }
 
 const Dashboard = () => {
@@ -51,6 +55,8 @@ const Dashboard = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedAlumni, setSelectedAlumni] = useState<AlumniWithId | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid');
+  const [selectedYear, setSelectedYear] = useState<string>('all');
 
   const [stats, setStats] = useState({
     totalAlumni: 0,
@@ -64,21 +70,47 @@ const Dashboard = () => {
 
     const unsubscribe = onValue(alumniRef, (snapshot) => {
       const data = snapshot.val();
+      console.log('Firebase data:', data); // Debug log
+      
       if (data) {
-        const alumniArray: AlumniWithId[] = Object.entries(data).map(([id, value]) => ({
-          id,
-          ...(value as AlumniData),
-        }));
+        const alumniArray: AlumniWithId[] = [];
+        
+        Object.entries(data).forEach(([firebaseKey, alumniData]) => {
+          console.log('Processing entry:', firebaseKey, alumniData); // Debug log
+          
+          // The Firebase key is the ID, alumniData is the actual data
+          alumniArray.push({
+            id: firebaseKey, // Use Firebase push key as ID
+            data: alumniData as AlumniData,
+          });
+        });
+
+        console.log('Processed alumni array:', alumniArray); // Debug log
+
+        // Sort by registration date (newest first)
+        alumniArray.sort((a, b) => {
+          const dateA = a.data.registrationDate ? new Date(a.data.registrationDate).getTime() : 0;
+          const dateB = b.data.registrationDate ? new Date(b.data.registrationDate).getTime() : 0;
+          return dateB - dateA;
+        });
 
         setAlumniList(alumniArray);
         setFilteredAlumni(alumniArray);
 
-        const uniqueSchools = new Set(alumniArray.map((a) => a.schoolAttended)).size;
-        const uniqueCompanies = new Set(alumniArray.map((a) => a.companyName)).size;
+        // Calculate stats
+        const uniqueSchools = new Set(alumniArray.map((a) => a.data.schoolAttended)).size;
+        const uniqueCompanies = new Set(alumniArray.map((a) => a.data.companyName)).size;
+        
+        // Count registrations from last 30 days
         const thirtyDaysAgo = Date.now() - 30 * 24 * 60 * 60 * 1000;
         const recentCount = alumniArray.filter((a) => {
-          const createdAt = a.registrationDate ? new Date(a.registrationDate).getTime() : 0;
-          return createdAt > thirtyDaysAgo;
+          if (!a.data.registrationDate) return false;
+          try {
+            const registrationDate = new Date(a.data.registrationDate).getTime();
+            return registrationDate > thirtyDaysAgo;
+          } catch {
+            return false;
+          }
         }).length;
 
         setStats({
@@ -87,36 +119,87 @@ const Dashboard = () => {
           totalCompanies: uniqueCompanies,
           recentRegistrations: recentCount,
         });
+      } else {
+        console.log('No data found in Firebase'); // Debug log
+        setAlumniList([]);
+        setFilteredAlumni([]);
+        setStats({
+          totalAlumni: 0,
+          totalSchools: 0,
+          totalCompanies: 0,
+          recentRegistrations: 0,
+        });
       }
+      setLoading(false);
+    }, (error) => {
+      console.error('Error fetching alumni data:', error);
       setLoading(false);
     });
 
     return () => off(alumniRef, 'value', unsubscribe);
   }, []);
 
+  // Get unique graduation years for filter
+  const graduationYears = React.useMemo(() => {
+    const years = new Set(alumniList.map(alumni => alumni.data.yearOfGraduation).filter(Boolean));
+    return Array.from(years).sort((a, b) => b.localeCompare(a));
+  }, [alumniList]);
+
+  // Filter alumni based on search term and selected year
   useEffect(() => {
-    if (searchTerm.trim() === '') {
-      setFilteredAlumni(alumniList);
-    } else {
-      const filtered = alumniList.filter(
-        (alumni) =>
-          alumni.fullName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          alumni.schoolAttended?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          alumni.currentJobTitle?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          alumni.companyName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          alumni.place?.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-      setFilteredAlumni(filtered);
+    setFilteredAlumni(alumniList);
+  }, [alumniList]);
+
+  useEffect(() => {
+    const filtered = filteredAlumni;
+
+    let result = filtered;
+
+    // Apply year filter
+    if (selectedYear !== 'all') {
+      result = result.filter(alumni => alumni.data.yearOfGraduation === selectedYear);
     }
-  }, [searchTerm, alumniList]);
+
+    // Apply search filter
+    if (searchTerm.trim() !== '') {
+      const term = searchTerm.toLowerCase();
+      result = result.filter(
+        (alumni) =>
+          alumni.data.fullName?.toLowerCase().includes(term) ||
+          alumni.data.schoolAttended?.toLowerCase().includes(term) ||
+          alumni.data.currentJobTitle?.toLowerCase().includes(term) ||
+          alumni.data.companyName?.toLowerCase().includes(term) ||
+          alumni.data.place?.toLowerCase().includes(term) ||
+          alumni.data.qualification?.toLowerCase().includes(term) ||
+          alumni.data.mobileNumber?.includes(searchTerm)
+      );
+    }
+
+    setFilteredAlumni(result);
+  }, [searchTerm, selectedYear]);
 
   const handleViewDetails = (alumni: AlumniWithId) => {
+    console.log('View details clicked for:', alumni.id, alumni.data.fullName); // Debug log
     setSelectedAlumni(alumni);
     setIsDialogOpen(true);
   };
 
   const handleExportData = () => {
-    exportAlumniToCSV(filteredAlumni, `yes-india-alumni-${new Date().toISOString().split('T')[0]}`);
+    // Convert to format expected by export utility
+    const exportData = filteredAlumni.map(alumni => ({
+      id: alumni.id,
+      ...alumni.data
+    }));
+    exportAlumniToCSV(exportData, `yes-india-alumni-${new Date().toISOString().split('T')[0]}`);
+  };
+
+  const handleYearFilterChange = (year: string) => {
+    setSelectedYear(year);
+  };
+
+  const clearFilters = () => {
+    setSearchTerm('');
+    setSelectedYear('all');
   };
 
   const statsCards = [
@@ -188,45 +271,127 @@ const Dashboard = () => {
                   </CardTitle>
                   <CardDescription className="text-base mt-2">
                     Browse and manage {filteredAlumni.length} registered alumni
+                    {selectedYear !== 'all' && ` from batch ${selectedYear}`}
                   </CardDescription>
                 </div>
                 <Button
                   onClick={handleExportData}
                   className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white shadow-lg"
+                  disabled={filteredAlumni.length === 0}
                 >
                   <Download className="mr-2 h-4 w-4" />
                   Export to CSV
                 </Button>
               </div>
 
-              {/* Search Bar */}
-              <div className="relative mt-6">
-                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-                <Input
-                  type="text"
-                  placeholder="Search by name, school, job title, company, or location..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-12 py-6 text-base border-2 focus:border-blue-500 rounded-xl shadow-sm"
-                />
+              {/* Filters and Search Bar */}
+              <div className="mt-6 space-y-4">
+                {/* Year Filter */}
+                <div className="flex flex-wrap items-center gap-4">
+                  <div className="flex items-center gap-2">
+                    <Calendar className="h-4 w-4 text-gray-500" />
+                    <span className="text-sm font-medium text-gray-700">Filter by Batch:</span>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <Button
+                      variant={selectedYear === 'all' ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => handleYearFilterChange('all')}
+                      className={`px-3 ${selectedYear === 'all' ? 'bg-blue-500 text-white' : ''}`}
+                    >
+                      All Years
+                    </Button>
+                    {graduationYears.slice(0, 5).map((year) => (
+                      <Button
+                        key={year}
+                        variant={selectedYear === year ? 'default' : 'outline'}
+                        size="sm"
+                        onClick={() => handleYearFilterChange(year)}
+                        className={`px-3 ${selectedYear === year ? 'bg-blue-500 text-white' : ''}`}
+                      >
+                        {year}
+                      </Button>
+                    ))}
+                    {graduationYears.length > 5 && (
+                      <div className="relative group">
+                        <Button variant="outline" size="sm" className="px-3">
+                          More...
+                        </Button>
+                        <div className="absolute z-10 hidden group-hover:block bg-white shadow-lg rounded-lg p-2 mt-1 min-w-[120px]">
+                          {graduationYears.slice(5).map((year) => (
+                            <Button
+                              key={year}
+                              variant={selectedYear === year ? 'default' : 'ghost'}
+                              size="sm"
+                              onClick={() => handleYearFilterChange(year)}
+                              className="w-full justify-start mb-1"
+                            >
+                              {year}
+                            </Button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  {(searchTerm || selectedYear !== 'all') && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={clearFilters}
+                      className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                    >
+                      Clear Filters
+                    </Button>
+                  )}
+                </div>
+
+                {/* Search Bar */}
+                <div className="relative">
+                  <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                  <Input
+                    type="text"
+                    placeholder="Search by name, school, job title, company, location, or mobile..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-12 py-6 text-base border-2 focus:border-blue-500 rounded-xl shadow-sm"
+                  />
+                  {searchTerm && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="absolute right-2 top-1/2 transform -translate-y-1/2 h-8 w-8"
+                      onClick={() => setSearchTerm('')}
+                    >
+                      <span className="sr-only">Clear search</span>
+                      ×
+                    </Button>
+                  )}
+                </div>
               </div>
             </CardHeader>
 
             <CardContent className="p-6">
-              <Tabs defaultValue="grid" className="w-full">
-                <TabsList className="grid w-full max-w-md mx-auto grid-cols-2 mb-6 p-1 bg-gray-100 rounded-xl">
-                  <TabsTrigger value="grid" className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-md">
-                    <Grid3x3 className="h-4 w-4 mr-2" />
-                    Grid View
-                  </TabsTrigger>
-                  <TabsTrigger value="table" className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-md">
-                    <List className="h-4 w-4 mr-2" />
-                    Table View
-                  </TabsTrigger>
-                </TabsList>
+              <Tabs value={viewMode} onValueChange={(value) => setViewMode(value as 'grid' | 'table')} className="w-full">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+                  <TabsList className="grid w-full sm:w-auto grid-cols-2 p-1 bg-gray-100 rounded-xl">
+                    <TabsTrigger value="grid" className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-md">
+                      <Grid3x3 className="h-4 w-4 mr-2" />
+                      Grid View
+                    </TabsTrigger>
+                    <TabsTrigger value="table" className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-md">
+                      <List className="h-4 w-4 mr-2" />
+                      Table View
+                    </TabsTrigger>
+                  </TabsList>
+                  
+                  <div className="text-sm text-gray-600">
+                    Showing {filteredAlumni.length} of {alumniList.length} alumni
+                    {selectedYear !== 'all' && ` from batch ${selectedYear}`}
+                  </div>
+                </div>
 
                 {/* Grid View */}
-                <TabsContent value="grid">
+                <TabsContent value="grid" className="mt-0">
                   <AnimatePresence mode="wait">
                     {filteredAlumni.length === 0 ? (
                       <motion.div
@@ -242,21 +407,30 @@ const Dashboard = () => {
                           No alumni found matching your search
                         </p>
                         <p className="text-gray-400 text-sm mt-2">
-                          Try adjusting your search criteria
+                          {searchTerm || selectedYear !== 'all' ? 'Try adjusting your search criteria' : 'No alumni registered yet'}
                         </p>
+                        {(searchTerm || selectedYear !== 'all') && (
+                          <Button
+                            variant="outline"
+                            onClick={clearFilters}
+                            className="mt-4"
+                          >
+                            Clear Filters
+                          </Button>
+                        )}
                       </motion.div>
                     ) : (
                       <motion.div
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
-                        className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6"
+                        className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
                       >
                         {filteredAlumni.map((alumni, index) => (
                           <AlumniGridCard
                             key={alumni.id}
-                            alumni={alumni}
+                            alumni={{ id: alumni.id, ...alumni.data }}
                             index={index}
-                            onClick={handleViewDetails}
+                            onClick={() => handleViewDetails(alumni)}
                           />
                         ))}
                       </motion.div>
@@ -265,7 +439,7 @@ const Dashboard = () => {
                 </TabsContent>
 
                 {/* Table View */}
-                <TabsContent value="table">
+                <TabsContent value="table" className="mt-0">
                   {filteredAlumni.length === 0 ? (
                     <div className="text-center py-16">
                       <div className="inline-flex p-6 bg-gray-100 rounded-full mb-4">
@@ -274,6 +448,15 @@ const Dashboard = () => {
                       <p className="text-gray-500 text-lg font-medium">
                         No alumni found matching your search
                       </p>
+                      {(searchTerm || selectedYear !== 'all') && (
+                        <Button
+                          variant="outline"
+                          onClick={clearFilters}
+                          className="mt-4"
+                        >
+                          Clear Filters
+                        </Button>
+                      )}
                     </div>
                   ) : (
                     <div className="overflow-x-auto rounded-xl border">
@@ -293,8 +476,8 @@ const Dashboard = () => {
                           {filteredAlumni.map((alumni) => (
                             <AlumniTableRow
                               key={alumni.id}
-                              alumni={alumni}
-                              onClick={handleViewDetails}
+                              alumni={{ id: alumni.id, ...alumni.data }}
+                              onClick={() => handleViewDetails(alumni)}
                             />
                           ))}
                         </TableBody>
@@ -312,7 +495,7 @@ const Dashboard = () => {
       <AlumniDetailsDialog
         isOpen={isDialogOpen}
         onOpenChange={setIsDialogOpen}
-        alumni={selectedAlumni}
+        alumni={selectedAlumni ? { id: selectedAlumni.id, ...selectedAlumni.data } : null}
       />
     </div>
   );

@@ -41,7 +41,7 @@ const ProfessionalInfoForm: React.FC<ProfessionalInfoFormProps> = ({
             <div className="space-y-2">
               <Label htmlFor="currentJobTitle" className="flex items-center gap-2">
                 <Target className="w-4 h-4 text-gray-500" />
-                Job Title/Occupation <span className="text-red-500">*</span>
+                Job Title/Occupation
               </Label>
               <Input
                 id="currentJobTitle"
@@ -49,7 +49,6 @@ const ProfessionalInfoForm: React.FC<ProfessionalInfoFormProps> = ({
                 value={formData.currentJobTitle}
                 onChange={handleInputChange}
                 placeholder="e.g., Software Engineer, Teacher, Doctor, Student"
-                required
                 className="bg-white border-gray-300 focus:border-blue-500 focus:ring-blue-500"
               />
               <p className="text-xs text-gray-500 mt-1">
@@ -60,7 +59,7 @@ const ProfessionalInfoForm: React.FC<ProfessionalInfoFormProps> = ({
             <div className="space-y-2">
               <Label htmlFor="companyName" className="flex items-center gap-2">
                 <Building className="w-4 h-4 text-gray-500" />
-                Company/Organization <span className="text-red-500">*</span>
+                Company/Organization
               </Label>
               <Input
                 id="companyName"
@@ -68,7 +67,6 @@ const ProfessionalInfoForm: React.FC<ProfessionalInfoFormProps> = ({
                 value={formData.companyName}
                 onChange={handleInputChange}
                 placeholder="e.g., Google, ABC University, Self-employed"
-                required
                 className="bg-white border-gray-300 focus:border-blue-500 focus:ring-blue-500"
               />
               <p className="text-xs text-gray-500 mt-1">
@@ -156,14 +154,6 @@ const ProfessionalInfoForm: React.FC<ProfessionalInfoFormProps> = ({
             </p>
           </div>
         </div>
-      </div>
-
-      {/* Optional Info */}
-      <div className="bg-gradient-to-r from-gray-50 to-gray-100 p-4 rounded-xl border border-gray-200">
-        <p className="text-gray-600 text-sm">
-          <span className="font-medium">Note:</span> Fields marked with <span className="text-red-500">*</span> are required. 
-          Additional professional information helps us better understand our alumni community.
-        </p>
       </div>
     </div>
   );

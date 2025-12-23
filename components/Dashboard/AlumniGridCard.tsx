@@ -10,14 +10,10 @@ import { Badge } from '@/components/ui/badge';
 import { Building2, GraduationCap, MapPin, Eye } from 'lucide-react';
 import { AlumniData } from '@/lib/types';
 
-interface AlumniWithId extends AlumniData {
-  id: string;
-}
-
 interface AlumniGridCardProps {
-  alumni: AlumniWithId;
+  alumni: AlumniData & { id: string };
   index: number;
-  onClick: (alumni: AlumniWithId) => void;
+  onClick: (alumni: AlumniData & { id: string }) => void;
 }
 
 const AlumniGridCard: React.FC<AlumniGridCardProps> = ({ alumni, index, onClick }) => {
