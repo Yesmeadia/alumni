@@ -148,9 +148,9 @@ const EducationalInfoForm: React.FC<EducationalInfoFormProps> = ({
                 <SelectTrigger className="bg-white border-gray-300 focus:border-blue-500 focus:ring-blue-500">
                   <SelectValue placeholder="Select your state" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="max-h-[300px] overflow-y-auto scroll-smooth [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-gray-100 [&::-webkit-scrollbar-thumb]:bg-gray-300 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-gray-400">
                   {INDIAN_STATES.map((state) => (
-                    <SelectItem key={state} value={state} className="focus:bg-blue-50">
+                    <SelectItem key={state} value={state} className="focus:bg-blue-50 cursor-pointer">
                       {state}
                     </SelectItem>
                   ))}
@@ -171,9 +171,9 @@ const EducationalInfoForm: React.FC<EducationalInfoFormProps> = ({
                   <SelectTrigger className="bg-white border-gray-300 focus:border-blue-500 focus:ring-blue-500">
                     <SelectValue placeholder="Select your district" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="max-h-[300px] overflow-y-auto scroll-smooth [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-gray-100 [&::-webkit-scrollbar-thumb]:bg-gray-300 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-gray-400">
                     {JK_DISTRICTS.map((district) => (
-                      <SelectItem key={district} value={district} className="focus:bg-blue-50">
+                      <SelectItem key={district} value={district} className="focus:bg-blue-50 cursor-pointer">
                         {district}
                       </SelectItem>
                     ))}
@@ -195,12 +195,12 @@ const EducationalInfoForm: React.FC<EducationalInfoFormProps> = ({
                 <SelectTrigger className="bg-white border-gray-300 focus:border-blue-500 focus:ring-blue-500 h-auto min-h-[64px] py-3 [&>span]:block [&>span]:whitespace-normal [&>span]:w-full [&>span]:text-left [&>span]:leading-relaxed">
                   <SelectValue placeholder={getSchoolPlaceholder()} />
                 </SelectTrigger>
-                <SelectContent className="max-w-[90vw] md:max-w-[600px]">
+                <SelectContent className="max-w-[90vw] md:max-w-[600px] max-h-[400px] overflow-y-auto scroll-smooth [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-gray-100 [&::-webkit-scrollbar-thumb]:bg-gray-300 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-gray-400">
                   {availableSchools.map((school) => (
                     <SelectItem 
                       key={school} 
                       value={school} 
-                      className="focus:bg-blue-50 whitespace-normal py-4 leading-relaxed min-h-[56px]"
+                      className="focus:bg-blue-50 whitespace-normal py-4 leading-relaxed min-h-[56px] cursor-pointer"
                     >
                       <span className="block break-words">{school}</span>
                     </SelectItem>
@@ -228,9 +228,9 @@ const EducationalInfoForm: React.FC<EducationalInfoFormProps> = ({
                 <SelectTrigger className="bg-white border-gray-300 focus:border-blue-500 focus:ring-blue-500">
                   <SelectValue placeholder="Select graduation year" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="max-h-[300px] overflow-y-auto scroll-smooth [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-gray-100 [&::-webkit-scrollbar-thumb]:bg-gray-300 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-gray-400">
                   {GRADUATION_YEARS.map((year) => (
-                    <SelectItem key={year} value={year} className="focus:bg-blue-50">
+                    <SelectItem key={year} value={year} className="focus:bg-blue-50 cursor-pointer">
                       {year}
                     </SelectItem>
                   ))}
@@ -250,9 +250,9 @@ const EducationalInfoForm: React.FC<EducationalInfoFormProps> = ({
                 <SelectTrigger className="bg-white border-gray-300 focus:border-blue-500 focus:ring-blue-500">
                   <SelectValue placeholder="Select class" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="max-h-[300px] overflow-y-auto scroll-smooth [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-gray-100 [&::-webkit-scrollbar-thumb]:bg-gray-300 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-gray-400">
                   {LAST_CLASS_OPTIONS.map((option) => (
-                    <SelectItem key={option} value={option} className="focus:bg-blue-50">
+                    <SelectItem key={option} value={option} className="focus:bg-blue-50 cursor-pointer">
                       {option}
                     </SelectItem>
                   ))}

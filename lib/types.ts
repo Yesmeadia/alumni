@@ -82,7 +82,7 @@ export const JK_SCHOOLS_BY_DISTRICT = {
     'Yaseen English School - Chandak',
     'Yaseen English School - Galhuta Harni',
     'Yaseen English School - Mendhar',
-    'Yaseen English school - Serikhawaja',
+    'Yaseen English School - Serikhawaja',
     'Yaseen English School - Dhundak',
     'Yaseen English School - Surankote',
     'Yaseen English School - Trananwali',
