@@ -181,7 +181,7 @@ const EducationalInfoForm: React.FC<EducationalInfoFormProps> = ({
                 </Select>
               </div>
             )}
-
+            
             <div className="space-y-2">
               <Label htmlFor="schoolAttended" className="flex items-center gap-2">
                 <School className="w-4 h-4 text-gray-500" />
@@ -192,15 +192,15 @@ const EducationalInfoForm: React.FC<EducationalInfoFormProps> = ({
                 onValueChange={(value) => handleSelectChange('schoolAttended', value)}
                 disabled={isSchoolSelectDisabled}
               >
-                <SelectTrigger className="bg-white border-gray-300 focus:border-blue-500 focus:ring-blue-500 h-auto min-h-[40px] md:h-10 [&>span]:block [&>span]:whitespace-normal [&>span]:md:whitespace-nowrap [&>span]:md:truncate [&>span]:w-full [&>span]:text-left [&>span]:py-1 [&>span]:leading-tight">
+                <SelectTrigger className="bg-white border-gray-300 focus:border-blue-500 focus:ring-blue-500 h-auto min-h-[64px] py-3 [&>span]:block [&>span]:whitespace-normal [&>span]:w-full [&>span]:text-left [&>span]:leading-relaxed">
                   <SelectValue placeholder={getSchoolPlaceholder()} />
                 </SelectTrigger>
-                <SelectContent className="max-w-[90vw]">
+                <SelectContent className="max-w-[90vw] md:max-w-[600px]">
                   {availableSchools.map((school) => (
                     <SelectItem 
                       key={school} 
                       value={school} 
-                      className="focus:bg-blue-50 whitespace-normal py-3 leading-snug"
+                      className="focus:bg-blue-50 whitespace-normal py-4 leading-relaxed min-h-[56px]"
                     >
                       <span className="block break-words">{school}</span>
                     </SelectItem>
@@ -297,7 +297,7 @@ const EducationalInfoForm: React.FC<EducationalInfoFormProps> = ({
             <div className="space-y-2">
               <Label htmlFor="qualification" className="flex items-center gap-2">
                 <GraduationCap className="w-4 h-4 text-gray-500" />
-                Highest Qualification
+                Highest Qualification <span className="text-red-500">*</span>
               </Label>
               <Input
                 id="qualification"
@@ -305,6 +305,7 @@ const EducationalInfoForm: React.FC<EducationalInfoFormProps> = ({
                 value={formData.qualification || ''}
                 onChange={handleInputChange}
                 placeholder="e.g., B.Tech, MBA, M.Sc, BA, 12th Pass"
+                required
                 className="bg-white border-gray-300 focus:border-purple-500 focus:ring-purple-500"
               />
             </div>
