@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import { Eye, EyeOff, Mail, Lock, ArrowRight, Shield, CheckCircle } from 'lucide-react';
 
 // Alumni data
@@ -39,6 +40,7 @@ declare global {
 }
 
 export default function LoginForm() {
+  const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -66,7 +68,6 @@ export default function LoginForm() {
 
     const siteKey = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY;
     
-    // Check if site key is configured
     if (!siteKey) {
       console.error('reCAPTCHA site key is not configured');
       setError('Security verification is not configured. Please contact support.');
@@ -138,14 +139,16 @@ export default function LoginForm() {
       if (!response.ok) {
         setError(data.message || 'Failed to login. Please check your credentials.');
         if (window.grecaptcha) window.grecaptcha.reset();
+        setLoading(false);
         return;
       }
 
-      window.location.href = '/dashboard';
+      // Use Next.js router for client-side navigation instead of window.location
+      // This prevents page refresh and works properly with Next.js
+      router.push('/dashboard');
     } catch (err: any) {
       setError(err.message || 'An error occurred. Please try again.');
       if (window.grecaptcha) window.grecaptcha.reset();
-    } finally {
       setLoading(false);
     }
   };
@@ -239,8 +242,6 @@ export default function LoginForm() {
                 </div>
               </div>
             </div>
-
-
           </div>
 
           {/* Features */}
@@ -393,8 +394,6 @@ export default function LoginForm() {
               )}
             </button>
           </div>
-
-
 
           {/* Footer */}
           <div className="mt-8 pt-6 border-t border-gray-200">
