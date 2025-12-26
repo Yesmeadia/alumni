@@ -64,18 +64,14 @@ export default function LoginForm() {
     if (scriptLoadedRef.current) return;
     scriptLoadedRef.current = true;
 
-    // Get site key from environment variable
     const siteKey = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY;
     
     // Check if site key is configured
     if (!siteKey) {
-      console.error('reCAPTCHA site key is not configured in environment variables');
-      console.error('Please add NEXT_PUBLIC_RECAPTCHA_SITE_KEY to your .env.local file');
-      setError('Security verification is not configured. Please add reCAPTCHA site key to environment variables.');
+      console.error('reCAPTCHA site key is not configured');
+      setError('Security verification is not configured. Please contact support.');
       return;
     }
-
-    console.log('Loading reCAPTCHA with site key:', siteKey.substring(0, 10) + '...');
 
     window.onRecaptchaLoad = () => {
       if (window.grecaptcha && recaptchaRef.current) {
@@ -83,23 +79,11 @@ export default function LoginForm() {
           window.grecaptcha.render(recaptchaRef.current, {
             sitekey: siteKey,
             theme: 'light',
-            callback: () => {
-              console.log('reCAPTCHA verification successful');
-            },
-            'expired-callback': () => {
-              console.log('reCAPTCHA expired, please verify again');
-              setError('Security verification expired. Please verify again.');
-            },
-            'error-callback': () => {
-              console.error('reCAPTCHA error occurred');
-              setError('Security verification error. Please refresh the page.');
-            }
           });
           setRecaptchaReady(true);
-          console.log('reCAPTCHA loaded successfully');
         } catch (err) {
           console.error('Error rendering reCAPTCHA:', err);
-          setError('Failed to initialize security verification. Please refresh the page.');
+          setError('Failed to initialize security verification. Please check your site configuration.');
         }
       }
     };
@@ -109,8 +93,8 @@ export default function LoginForm() {
     script.async = true;
     script.defer = true;
     script.onerror = () => {
-      console.error('Failed to load reCAPTCHA script from Google');
-      setError('Failed to load security verification. Please check your internet connection and refresh.');
+      console.error('Failed to load reCAPTCHA script');
+      setError('Failed to load security verification. Please refresh the page.');
     };
 
     document.head.appendChild(script);
@@ -293,7 +277,7 @@ export default function LoginForm() {
           )}
 
           {/* Loading Alert */}
-          {!recaptchaReady && !error && (
+          {!recaptchaReady && (
             <div className="mb-6 p-4 bg-blue-50 border-l-4 border-blue-500 rounded-lg">
               <div className="flex items-start gap-3">
                 <Shield className="w-5 h-5 text-blue-500 flex-shrink-0 mt-0.5 animate-pulse" />
