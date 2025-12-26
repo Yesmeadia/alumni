@@ -283,7 +283,7 @@ const MultiStepRegistration = () => {
       console.log('Calling registerAlumni function...');
       
       // Register alumni with Firebase (imageFile is optional)
-      const result = await registerAlumni(completeAlumniData, imageFile || undefined);
+      const result = await registerAlumni(completeAlumniData, imageFile);
       
       console.log('Registration result:', result);
       
