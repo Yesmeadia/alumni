@@ -94,16 +94,26 @@ export default function LoginForm() {
     if (scriptLoadedRef.current) return;
     scriptLoadedRef.current = true;
 
+    const siteKey = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY;
+    
+    // Check if site key is configured
+    if (!siteKey) {
+      console.error('reCAPTCHA site key is not configured');
+      setError('Security verification is not configured. Please contact support.');
+      return;
+    }
+
     window.onRecaptchaLoad = () => {
       if (window.grecaptcha && recaptchaRef.current) {
         try {
           window.grecaptcha.render(recaptchaRef.current, {
-            sitekey: process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY || 'your-site-key',
+            sitekey: siteKey,
             theme: 'light',
           });
           setRecaptchaReady(true);
         } catch (err) {
           console.error('Error rendering reCAPTCHA:', err);
+          setError('Failed to initialize security verification. Please check your site configuration.');
         }
       }
     };

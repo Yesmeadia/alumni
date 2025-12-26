@@ -133,10 +133,10 @@ const SuccessMessage: React.FC<SuccessMessageProps> = ({
               <p className="text-sm text-gray-600">
                 Need help? Contact us at{' '}
                 <a
-                  href="mailto:support@yesindia.com"
+                  href="mailto:hello@cyberduce.com"
                   className="text-blue-600 font-semibold hover:underline"
                 >
-                  support@yesindia.com
+                  hello@cyberduce.com
                 </a>
               </p>
             </motion.div>
