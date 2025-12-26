@@ -188,13 +188,6 @@ const AlumniDetailsDialog: React.FC<AlumniDetailsDialogProps> = ({
 
                 {/* Alumni Info */}
                 <div className="w-full space-y-3">
-                  <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                    <span className="text-sm text-gray-500">Alumni ID:</span>
-                    <Badge variant="outline" className="font-mono text-xs">
-                      {safeAlumniId.substring(0, 8).toUpperCase()}
-                    </Badge>
-                  </div>
-                  
                   {alumni.schoolAttended && (
                     <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
                       <span className="text-sm text-gray-500">School:</span>
@@ -656,9 +649,6 @@ const AlumniDetailsDialog: React.FC<AlumniDetailsDialogProps> = ({
                   </p>
                 </div>
               </div>
-              <Badge variant="outline" className="px-4 py-2 font-mono">
-                Alumni ID: {safeAlumniId.substring(0, 8).toUpperCase()}
-              </Badge>
             </div>
           </div>
         </div>
