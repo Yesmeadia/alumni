@@ -29,10 +29,18 @@ interface AlumniRegistrationData {
 }
 
 export const uploadImageToStorage = async (
-  file: File,
+  file: File | null,
   userId: string
 ): Promise<string> => {
   try {
+    // If no file is provided, return empty string
+    if (!file) {
+      console.log('No image file provided, skipping upload');
+      return '';
+    }
+
+    console.log('Uploading image:', file.name);
+    
     // Create a unique filename
     const timestamp = Date.now();
     const fileName = `alumni-photos/${userId}_${timestamp}_${file.name}`;
@@ -46,6 +54,7 @@ export const uploadImageToStorage = async (
     // Get download URL
     const downloadURL = await getDownloadURL(snapshot.ref);
     
+    console.log('Image uploaded successfully:', downloadURL);
     return downloadURL;
   } catch (error) {
     console.error('Error uploading image:', error);
@@ -58,6 +67,8 @@ export const saveAlumniData = async (
   photoURL: string
 ): Promise<string> => {
   try {
+    console.log('Saving alumni data to database...');
+    
     // Create reference to alumni collection
     const alumniRef = ref(database, 'alumni');
     
@@ -71,8 +82,12 @@ export const saveAlumniData = async (
       registrationDate: new Date().toISOString(),
     };
     
+    console.log('Alumni data to save:', alumniData);
+    
     // Save to database
     await set(newAlumniRef, alumniData);
+    
+    console.log('Alumni data saved successfully with ID:', newAlumniRef.key);
     
     // Return the generated key
     return newAlumniRef.key || '';
@@ -84,17 +99,33 @@ export const saveAlumniData = async (
 
 export const registerAlumni = async (
   formData: Omit<AlumniRegistrationData, 'photoURL' | 'registrationDate'>,
-  imageFile: File
+  imageFile: File | null
 ): Promise<{ success: boolean; alumniId: string; message: string }> => {
   try {
+    console.log('=== registerAlumni function started ===');
+    console.log('Form data received:', formData);
+    console.log('Image file received:', imageFile ? imageFile.name : 'No image');
+    
     // Generate a unique ID for this registration
     const tempUserId = `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    console.log('Generated temp user ID:', tempUserId);
     
-    // Step 1: Upload image to Firebase Storage
-    const photoURL = await uploadImageToStorage(imageFile, tempUserId);
+    // Step 1: Upload image to Firebase Storage (optional)
+    let photoURL = '';
+    if (imageFile) {
+      console.log('Uploading image to storage...');
+      photoURL = await uploadImageToStorage(imageFile, tempUserId);
+      console.log('Image uploaded, URL:', photoURL);
+    } else {
+      console.log('No image to upload, proceeding without photo');
+    }
     
     // Step 2: Save alumni data with photo URL to Realtime Database
+    console.log('Saving alumni data to database...');
     const alumniId = await saveAlumniData(formData, photoURL);
+    console.log('Alumni data saved with ID:', alumniId);
+    
+    console.log('=== registerAlumni function completed successfully ===');
     
     return {
       success: true,
@@ -102,7 +133,14 @@ export const registerAlumni = async (
       message: 'Registration completed successfully!',
     };
   } catch (error) {
-    console.error('Error during registration:', error);
-    throw error;
+    console.error('=== Error during registration ===');
+    console.error('Error details:', error);
+    
+    // Return error response instead of throwing
+    return {
+      success: false,
+      alumniId: '',
+      message: error instanceof Error ? error.message : 'Registration failed. Please try again.',
+    };
   }
 };

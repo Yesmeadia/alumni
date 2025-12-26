@@ -54,7 +54,6 @@ const MultiStepRegistration = () => {
     industry: '',
     stayInvolved: [],
     messageToTeacher: '',
-    // These fields will be set when submitting
     status: 'pending',
     registrationDate: new Date().toISOString().split('T')[0],
     photoURL: '',
@@ -90,6 +89,7 @@ const MultiStepRegistration = () => {
   };
 
   const handleImageChange = (file: File | null, preview: string) => {
+    console.log('Image changed:', file ? file.name : 'No file', preview ? 'Preview available' : 'No preview');
     setImageFile(file);
     setImagePreview(preview);
   };
@@ -135,64 +135,47 @@ const MultiStepRegistration = () => {
 
   const validateCurrentStep = (): boolean => {
     console.log('Validating step:', currentStep);
-    console.log('Form data:', {
-      fullName: formData.fullName,
-      mobileNumber: formData.mobileNumber,
-      whatsappNumber: formData.whatsappNumber,
-      address: formData.address,
-      place: formData.place,
-      state: formData.state,
-      district: formData.district,
-      pinCode: formData.pinCode
-    });
+    console.log('Form data:', formData);
     
     switch (currentStep) {
-      case 1: // Personal Info
-        // Validate full name
+      case 1: // Personal Info - MANDATORY
         if (!formData.fullName?.trim()) {
           toast.error('Please enter your full name');
           return false;
         }
         
-        // Validate mobile number
         if (!formData.mobileNumber || !/^\d{10}$/.test(formData.mobileNumber)) {
           toast.error('Please enter a valid 10-digit mobile number');
           return false;
         }
         
-        // Validate WhatsApp number
         if (!formData.whatsappNumber || !/^\d{10}$/.test(formData.whatsappNumber)) {
           toast.error('Please enter a valid 10-digit WhatsApp number');
           return false;
         }
         
-        // Validate address
         if (!formData.address?.trim()) {
           toast.error('Please enter your address');
           return false;
         }
         
-        // Validate place
         if (!formData.place?.trim()) {
           toast.error('Please enter your city/town');
           return false;
         }
         
-        // Validate state
         if (!formData.state) {
           toast.error('Please select your state');
           return false;
         }
         
         if (formData.state === 'Jammu and Kashmir') {
-          console.log('Jammu & Kashmir detected, checking district:', formData.district);
           if (!formData.district || formData.district.trim() === '') {
             toast.error('Please select your district (required for Jammu & Kashmir)');
             return false;
           }
         }
         
-        // Validate pin code
         if (!formData.pinCode || !/^\d{6}$/.test(formData.pinCode)) {
           toast.error('Please enter a valid 6-digit pin code');
           return false;
@@ -200,36 +183,25 @@ const MultiStepRegistration = () => {
         
         console.log('Step 1 validation passed!');
         return true;
-      case 2: 
-        if (!formData.schoolAttended) {
-          toast.error('Please select the school you attended');
-          return false;
-        }
-        if (!formData.yearOfGraduation) {
-          toast.error('Please select your graduation year');
-          return false;
-        }
-        if (!formData.lastClassAttended) {
-          toast.error('Please select the last class attended');
-          return false;
-        }
-        if (formData.lastClassAttended === 'Other' && !formData.otherClass?.trim()) {
-          toast.error('Please specify the class name');
-          return false;
-        }
-        console.log('Step 2 validation passed');
+
+      case 2: // Educational Info - ALL OPTIONAL
+        console.log('Step 2 validation passed (all optional)');
         return true;
 
-      case 3: // Professional Info
-        console.log('Step 3 validation passed');
+      case 3: // Professional Info - ALL OPTIONAL
+        console.log('Step 3 validation passed (all optional)');
         return true;
 
-      case 4: // Photo Upload
-        console.log('Step 4 validation passed');
+      case 4: // Photo Upload - OPTIONAL
+        console.log('Step 4 validation passed (photo optional)');
         return true;
 
-      case 5: // Involvement - All fields are optional
+      case 5: // Involvement - ALL OPTIONAL
         console.log('Step 5 validation passed (all optional)');
+        return true;
+
+      case 6: // Preview - No validation needed
+        console.log('Step 6 - Preview page');
         return true;
 
       default:
@@ -239,7 +211,6 @@ const MultiStepRegistration = () => {
 
   const handleNext = () => {
     console.log('Next button clicked for step:', currentStep);
-    console.log('Current form data:', formData);
     
     if (!validateCurrentStep()) {
       console.log('Validation failed for step:', currentStep);
@@ -264,17 +235,15 @@ const MultiStepRegistration = () => {
   };
 
   const handleFinalSubmit = async () => {
-    if (!imageFile) {
-      toast.error('Please upload your photo');
-      return;
-    }
-
+    console.log('=== FINAL SUBMIT STARTED ===');
+    console.log('Current form data:', formData);
+    console.log('Image file:', imageFile);
+    
     setLoading(true);
     
     try {
-      // Create complete alumni data object
+      // Create complete alumni data object with all required fields
       const completeAlumniData: AlumniData = {
-        ...formData,
         id: '', // Will be generated by Firebase
         fullName: formData.fullName || '',
         address: formData.address || '',
@@ -284,9 +253,11 @@ const MultiStepRegistration = () => {
         pinCode: formData.pinCode || '',
         mobileNumber: formData.mobileNumber || '',
         whatsappNumber: formData.whatsappNumber || '',
-        status: 'pending',
-        registrationDate: new Date().toISOString().split('T')[0],
-        socialMediaLink: '', // Keep empty or combine from other fields
+        facebookLink: formData.facebookLink || '',
+        instagramLink: formData.instagramLink || '',
+        twitterLink: formData.twitterLink || '',
+        linkedinLink: formData.linkedinLink || '',
+        otherSocialLink: formData.otherSocialLink || '',
         schoolAttended: formData.schoolAttended || '',
         yearOfGraduation: formData.yearOfGraduation || '',
         lastClassAttended: formData.lastClassAttended || '',
@@ -301,33 +272,37 @@ const MultiStepRegistration = () => {
         industry: formData.industry || '',
         stayInvolved: formData.stayInvolved || [],
         messageToTeacher: formData.messageToTeacher || '',
+        status: 'pending',
+        registrationDate: new Date().toISOString().split('T')[0],
+        socialMediaLink: '', // Legacy field
         photoURL: '', // Will be set by Firebase
         createdAt: Date.now(),
-        facebookLink: formData.facebookLink || '',
-        instagramLink: formData.instagramLink || '',
-        twitterLink: formData.twitterLink || '',
-        linkedinLink: formData.linkedinLink || '',
-        otherSocialLink: formData.otherSocialLink || '',
       };
 
-      console.log('Submitting alumni data:', completeAlumniData);
+      console.log('Complete alumni data prepared:', completeAlumniData);
+      console.log('Calling registerAlumni function...');
       
-      // Register alumni with Firebase
-      const result = await registerAlumni(completeAlumniData, imageFile);
+      // Register alumni with Firebase (imageFile is optional)
+      const result = await registerAlumni(completeAlumniData, imageFile || undefined);
+      
+      console.log('Registration result:', result);
       
       if (result.success) {
+        console.log('Registration successful!');
         setRegistrationId(result.alumniId);
         setShowSuccess(true);
         scrollToTop();
-        toast.success(result.message);
+        toast.success(result.message || 'Registration submitted successfully!');
       } else {
-        toast.error(result.message || 'Registration failed');
+        console.error('Registration failed:', result.message);
+        toast.error(result.message || 'Registration failed. Please try again.');
       }
     } catch (error: any) {
       console.error('Registration error:', error);
       toast.error(error.message || 'Failed to submit registration. Please try again.');
     } finally {
       setLoading(false);
+      console.log('=== FINAL SUBMIT ENDED ===');
     }
   };
 
@@ -372,7 +347,7 @@ const MultiStepRegistration = () => {
     setShowSuccess(false);
     setRegistrationId('');
     
-    // Navigate to home (you can use router.push('/') if using Next.js router)
+    // Navigate to home
     window.location.href = '/';
   };
 
@@ -605,7 +580,6 @@ const MultiStepRegistration = () => {
                           {currentStep === 5 && (
                             <Button
                               onClick={() => {
-                                // Skip validation for preview step
                                 setCurrentStep(6);
                                 scrollToTop();
                               }}
@@ -629,7 +603,7 @@ const MultiStepRegistration = () => {
                         <Button
                           onClick={handleFinalSubmit}
                           size="lg"
-                          className="w-full sm:w-auto bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white rounded-xl px-8 py-2 font-semibold"
+                          className="w-full sm:w-auto bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white rounded-xl px-8 py-2 font-semibold shadow-lg"
                           disabled={loading}
                         >
                           {loading ? (
@@ -688,8 +662,8 @@ const MultiStepRegistration = () => {
                   <h4 className="font-bold text-gray-800 mb-1">Need Help?</h4>
                   <p className="text-gray-600 text-sm">
                     If you encounter any issues during registration, please contact our alumni support team at 
-                    <a href="mailto:support@yesindia.com" className="font-semibold text-blue-600 underline ml-1">
-                      support@yesindia.com
+                    <a href="mailto:hello@cyberduce.com" className="font-semibold text-blue-600 underline ml-1">
+                      hello@cyberduce.com
                     </a>
                   </p>
                 </div>

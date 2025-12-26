@@ -297,7 +297,7 @@ const EducationalInfoForm: React.FC<EducationalInfoFormProps> = ({
             <div className="space-y-2">
               <Label htmlFor="qualification" className="flex items-center gap-2">
                 <GraduationCap className="w-4 h-4 text-gray-500" />
-                Highest Qualification <span className="text-red-500">*</span>
+                Highest Qualification 
               </Label>
               <Input
                 id="qualification"
