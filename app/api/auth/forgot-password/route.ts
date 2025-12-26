@@ -2,7 +2,7 @@
 import { sendPasswordResetEmail } from 'firebase/auth';
 import { auth } from '@/lib/firebase'; 
 
-export async function POST(request) {
+export async function POST(request: { json: () => PromiseLike<{ email: any; }> | { email: any; }; }) {
   try {
     const { email } = await request.json();
 
