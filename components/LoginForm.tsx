@@ -29,36 +29,6 @@ const alumniData = [
     department: "BUMS (KU) MD",
     image: "/images/alumni/mohammad-owais.jpg"
   },
-  {
-    name: "Manazer Hussain KAS",
-    position: "DYSP",
-    department: "J & K Police",
-    image: "/images/alumni/manazer_hussain.jpg"
-  },
-  {
-    name: "Dr. Mohammad Shaban Sohrabi",
-    position: "Senior Asst. Professor",
-    department: "Model Institute of Engineering and Technology, Jammu",
-    image: "/images/alumni/mohammad_shaban.jpg"
-  },
-  {
-    name: "Manzoor Hussain IAS",
-    position: "DIGP, J & K Police",
-    department: "",
-    image: "/images/alumni/manzoor_hussain.jpg"
-  },
-  {
-    name: "Javid Salroo IAS",
-    position: "DIGP, J & K Police",
-    department: "",
-    image: "/images/alumni/javid_salroo.jpg"
-  },
-  {
-    name: "Javed Shah IAS",
-    position: "DIGP, J & K Police",
-    department: "",
-    image: "/images/alumni/javed_shah.jpg"
-  }
 ];
 
 declare global {
