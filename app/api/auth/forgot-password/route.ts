@@ -23,7 +23,7 @@ export async function POST(request: { json: () => PromiseLike<{ email: any; }> |
       { message: 'Password reset email sent successfully' },
       { status: 200 }
     );
-  } catch (error) {
+  } catch (error: any) {
     console.error('Password reset error:', error);
     
     // Handle specific Firebase errors
