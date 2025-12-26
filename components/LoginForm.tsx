@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { useRouter } from 'next/navigation';
 import { Eye, EyeOff, Mail, Lock, ArrowRight, Shield, CheckCircle } from 'lucide-react';
+import { useAuth } from '@/context/AuthContext';
 
 // Alumni data
 const alumniData = [
@@ -40,7 +40,8 @@ declare global {
 }
 
 export default function LoginForm() {
-  const router = useRouter();
+  const { login } = useAuth();
+  
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -128,33 +129,32 @@ export default function LoginForm() {
     setLoading(true);
 
     try {
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password, recaptchaToken }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        setError(data.message || 'Failed to login. Please check your credentials.');
-        if (window.grecaptcha) window.grecaptcha.reset();
-        setLoading(false);
-        return;
-      }
-
-      // Use Next.js router for client-side navigation instead of window.location
-      // This prevents page refresh and works properly with Next.js
-      router.push('/dashboard');
+      // Firebase login - handles redirect automatically
+      await login(email, password);
     } catch (err: any) {
-      setError(err.message || 'An error occurred. Please try again.');
+      console.error('Login error:', err);
+      
+      // Handle specific Firebase errors
+      if (err.code === 'auth/user-not-found') {
+        setError('No account found with this email.');
+      } else if (err.code === 'auth/wrong-password') {
+        setError('Incorrect password. Please try again.');
+      } else if (err.code === 'auth/invalid-email') {
+        setError('Invalid email address.');
+      } else if (err.code === 'auth/user-disabled') {
+        setError('This account has been disabled.');
+      } else {
+        setError(err.message || 'Failed to login. Please check your credentials.');
+      }
+      
       if (window.grecaptcha) window.grecaptcha.reset();
+    } finally {
       setLoading(false);
     }
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
+    if (e.key === 'Enter' && !loading) {
       handleSubmit(e);
     }
   };
@@ -314,6 +314,7 @@ export default function LoginForm() {
                   }`}
                   placeholder="your.email@example.com"
                   disabled={loading}
+                  autoComplete="email"
                 />
               </div>
             </div>
@@ -343,11 +344,12 @@ export default function LoginForm() {
                   }`}
                   placeholder="Enter your password"
                   disabled={loading}
+                  autoComplete="current-password"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 focus:outline-none transition-colors"
+                  className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 focus:outline-none transition-colors disabled:opacity-50"
                   aria-label={showPassword ? 'Hide password' : 'Show password'}
                   disabled={loading}
                 >
@@ -362,6 +364,7 @@ export default function LoginForm() {
                 <input
                   type="checkbox"
                   className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
+                  disabled={loading}
                 />
                 <span className="text-sm text-gray-600">Remember me</span>
               </label>
