@@ -317,7 +317,7 @@ const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({
 
             <div className="space-y-2">
               <Label htmlFor="place">
-                City/Town <span className="text-red-500">*</span>
+                City/Town 
               </Label>
               <Input
                 id="place"
@@ -325,7 +325,6 @@ const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({
                 value={formData.place || ''}
                 onChange={handleInputChange}
                 placeholder="Place"
-                required
                 className="bg-white border-gray-300 focus:border-green-500 focus:ring-green-500"
               />
             </div>
@@ -333,7 +332,7 @@ const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({
             <div className="space-y-2">
               <Label htmlFor="pinCode" className="flex items-center gap-2">
                 <Hash className="w-4 h-4 text-gray-500" />
-                Pin Code <span className="text-red-500">*</span>
+                Pin Code 
               </Label>
               <Input
                 id="pinCode"
@@ -342,7 +341,6 @@ const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({
                 onChange={handleInputChange}
                 placeholder="Pin code"
                 maxLength={6}
-                required
                 className="bg-white border-gray-300 focus:border-green-500 focus:ring-green-500"
               />
             </div>

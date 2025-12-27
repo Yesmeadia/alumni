@@ -159,10 +159,6 @@ const MultiStepRegistration = () => {
           return false;
         }
         
-        if (!formData.place?.trim()) {
-          toast.error('Please enter your city/town');
-          return false;
-        }
         
         if (!formData.state) {
           toast.error('Please select your state');
@@ -174,11 +170,6 @@ const MultiStepRegistration = () => {
             toast.error('Please select your district (required for Jammu & Kashmir)');
             return false;
           }
-        }
-        
-        if (!formData.pinCode || !/^\d{6}$/.test(formData.pinCode)) {
-          toast.error('Please enter a valid 6-digit pin code');
-          return false;
         }
         
         console.log('Step 1 validation passed!');
