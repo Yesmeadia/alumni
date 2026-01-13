@@ -87,6 +87,10 @@ export const JK_SCHOOLS_BY_DISTRICT = {
     'Yaseen English School - Surankote',
     'Yaseen English School - Trananwali',
     'YES Model Institute of Education - Drogian',
+    'YES National Public school Rajpura - Mandi',
+    'Yaseen English School - Loran',
+    'Yaseen Islamia English Medium School - Sawjian',
+    'YES Baba Nazam Ud Din Edu Trust - Chaktroo',
     'YCIS - Dhundak',
     'YCIS - Sangiote',
 

@@ -219,7 +219,7 @@ const EducationalInfoForm: React.FC<EducationalInfoFormProps> = ({
             <div className="space-y-2">
               <Label htmlFor="yearOfGraduation" className="flex items-center gap-2">
                 <Calendar className="w-4 h-4 text-gray-500" />
-                Graduation Year <span className="text-red-500">*</span>
+                Pass-out year <span className="text-red-500">*</span>
               </Label>
               <Select
                 value={formData.yearOfGraduation || ''}
