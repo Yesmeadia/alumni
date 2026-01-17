@@ -14,7 +14,7 @@ export interface AlumniData {
   socialMediaLink: string;
   schoolAttended: string;
   yearOfGraduation: string;
-  lastClassAttended: string; 
+  lastClassAttended: string;
   otherClass?: string;
   currentJobTitle: string;
   companyName: string;
@@ -33,6 +33,8 @@ export interface AlumniData {
   twitterLink?: string;
   linkedinLink?: string;
   otherSocialLink?: string;
+  email?: string;
+  university?: string;
 }
 
 export const LAST_CLASS_OPTIONS = [
