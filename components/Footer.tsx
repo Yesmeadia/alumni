@@ -9,7 +9,7 @@ const Footer = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const projectVersion = process.env.NEXT_PUBLIC_VERSION || "1.0.2";
+  const projectVersion = process.env.NEXT_PUBLIC_VERSION || "1.0.3";
 
   useEffect(() => {
     const fetchIPAddress = async () => {
@@ -74,7 +74,7 @@ const Footer = () => {
 
           {/* Right: Copyright */}
           <div className="text-center md:text-right text-sm">
-            © {new Date().getFullYear()} YES INDIA FOUNDATION  
+            © {new Date().getFullYear()} YES INDIA FOUNDATION
             <br />
             All rights reserved.
           </div>
