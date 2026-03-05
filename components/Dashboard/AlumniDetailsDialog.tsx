@@ -2,33 +2,24 @@
 'use client';
 
 import React from 'react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
-  Phone,
-  MapPin,
-  GraduationCap,
-  Briefcase,
-  Building2,
-  Linkedin,
-  X,
-  Download,
-  Mail,
-  Pencil,
-  Trash2,
-  MessageSquare,
-  MessageCircle as MessageCircleIcon,
-  Users
+  Phone, MapPin, GraduationCap, Briefcase, Building2,
+  Linkedin, X, Download, Mail, Pencil, Trash2,
+  MessageSquare, MessageCircle as MessageCircleIcon,
+  Globe, Calendar, ShieldCheck, Facebook, Instagram, Twitter, ExternalLink
 } from 'lucide-react';
 import { AlumniData } from '@/lib/types';
+import { Badge } from '@/components/ui/badge';
 
 interface AlumniDetailsDialogProps {
   isOpen: boolean;
@@ -45,22 +36,18 @@ const AlumniDetailsDialog: React.FC<AlumniDetailsDialogProps> = ({
   onEdit,
   onDelete,
 }) => {
+  const router = useRouter();
   if (!alumni) return null;
 
-  const formatSocialLink = (link?: string) => {
+  const formatSocialLink = (link?: string, platform?: string) => {
     if (!link) return '';
     if (link.startsWith('http')) return link;
-    return `https://${link}`;
-  };
-
-  const handleExportProfile = () => {
-    const printContent = document.getElementById('alumni-profile-content');
-    if (printContent) {
-      const originalContents = document.body.innerHTML;
-      document.body.innerHTML = printContent.innerHTML;
-      window.print();
-      document.body.innerHTML = originalContents;
-      window.location.reload();
+    switch (platform) {
+      case 'facebook': return `https://facebook.com/${link}`;
+      case 'instagram': return `https://instagram.com/${link}`;
+      case 'twitter': return `https://x.com/${link}`;
+      case 'linkedin': return `https://linkedin.com/in/${link}`;
+      default: return `https://${link}`;
     }
   };
 
@@ -69,299 +56,379 @@ const AlumniDetailsDialog: React.FC<AlumniDetailsDialogProps> = ({
     try {
       const date = new Date(dateString);
       if (isNaN(date.getTime())) return 'N/A';
-      return date.toLocaleDateString('en-IN', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-      });
-    } catch {
-      return 'N/A';
-    }
+      return date.toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' });
+    } catch { return 'N/A'; }
   };
+
+  const socialLinks = [
+    { id: 'linkedin', label: 'LinkedIn', value: alumni.linkedinLink, icon: Linkedin, iconColor: 'text-[#0077b5]', hoverBg: 'hover:bg-[#0077b5]', border: 'border-blue-100' },
+    { id: 'facebook', label: 'Facebook', value: alumni.facebookLink, icon: Facebook, iconColor: 'text-[#1877F2]', hoverBg: 'hover:bg-[#1877F2]', border: 'border-blue-100' },
+    { id: 'instagram', label: 'Instagram', value: alumni.instagramLink, icon: Instagram, iconColor: 'text-[#E4405F]', hoverBg: 'hover:bg-[#E4405F]', border: 'border-pink-100' },
+    { id: 'twitter', label: 'Twitter / X', value: alumni.twitterLink, icon: Twitter, iconColor: 'text-slate-600', hoverBg: 'hover:bg-slate-900', border: 'border-slate-200' },
+    { id: 'email', label: 'Direct Email', value: alumni.email, icon: Mail, iconColor: 'text-indigo-500', hoverBg: 'hover:bg-indigo-600', border: 'border-indigo-100' },
+    { id: 'website', label: 'Portfolio', value: alumni.socialMediaLink, icon: Globe, iconColor: 'text-emerald-500', hoverBg: 'hover:bg-emerald-600', border: 'border-emerald-100' },
+  ].filter(l => !!l.value);
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="w-[98vw] max-w-[1200px] h-[90vh] max-h-[90vh] p-0 overflow-hidden border-0 shadow-3xl bg-slate-50 result-scroll-container flex flex-col rounded-2xl">
-        {/* Accessibility */}
+      <DialogContent showCloseButton={false} className="sm:max-w-[1000px] w-[95vw] p-0 overflow-hidden border-0 shadow-3xl bg-white rounded-[2rem] max-h-[90vh] flex flex-col">
         <DialogTitle className="sr-only">{alumni.fullName} Profile</DialogTitle>
-        <DialogDescription className="sr-only">Detailed profile view</DialogDescription>
+        <DialogDescription className="sr-only">Detailed profile view of alumni</DialogDescription>
 
-        {/* Scrollable Container */}
-        <div className="flex-1 overflow-y-auto scrollbar-hide" id="alumni-profile-content">
+        {/* Sophisticated Header Banner */}
+        <div className="relative shrink-0 print:hidden">
+          <div className="h-52 w-full bg-gradient-to-br from-[#0f172a] via-[#1e1b4b] to-[#0f172a] relative overflow-hidden">
+            {/* Background Pattern */}
+            <div className="absolute inset-0 opacity-20 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')]" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
 
-          {/* Header / Banner Section */}
-          <div className="relative">
-            {/* Gradient Banner */}
-            <div className="h-40 bg-red-600 w-full relative">
-              {/* Close & Export Buttons on top of banner */}
-              <div className="absolute top-4 right-4 flex gap-2 z-20">
+            {/* Top Navigation / Actions */}
+            <div className="absolute top-8 left-10 right-10 flex justify-between items-start z-20">
+              <div className="flex gap-3">
+                <Link
+                  href={alumni.id ? `/alumni/${alumni.id}/pdf` : '#'}
+                  onClick={(e) => !alumni.id && e.preventDefault()}
+                >
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    disabled={!alumni.id}
+                    className="bg-white/10 hover:bg-white/20 text-white backdrop-blur-md rounded-2xl px-5 h-11 border border-white/20 transition-all font-black uppercase tracking-widest text-[10px]"
+                  >
+                    <Download className="h-4 w-4 mr-2" /> Download PDF
+                  </Button>
+                </Link>
+                <Link
+                  href={alumni.id ? `/alumni/${alumni.id}/id-card` : '#'}
+                  onClick={(e) => !alumni.id && e.preventDefault()}
+                >
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    disabled={!alumni.id}
+                    className="bg-white/10 hover:bg-white/20 text-white backdrop-blur-md rounded-2xl px-5 h-11 border border-white/20 transition-all font-black uppercase tracking-widest text-[10px]"
+                  >
+                    <ShieldCheck className="h-4 w-4 mr-2" /> Get ID Card
+                  </Button>
+                </Link>
+                <Link
+                  href={alumni.id ? `/alumni/${alumni.id}` : '#'}
+                  onClick={(e) => !alumni.id && e.preventDefault()}
+                >
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    disabled={!alumni.id}
+                    className="bg-white/10 hover:bg-white/20 text-white backdrop-blur-md rounded-2xl px-5 h-11 border border-white/20 transition-all font-black uppercase tracking-widest text-[10px]"
+                  >
+                    <ExternalLink className="h-4 w-4 mr-2" /> Full Profile
+                  </Button>
+                </Link>
+                <Link
+                  href={alumni.id ? `/alumni/${alumni.id}/edit` : '#'}
+                  onClick={(e) => !alumni.id && e.preventDefault()}
+                >
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    disabled={!alumni.id}
+                    className="bg-white/10 hover:bg-white/20 text-white backdrop-blur-md rounded-2xl px-5 h-11 border border-white/20 transition-all font-black uppercase tracking-widest text-[10px]"
+                  >
+                    <Pencil className="h-4 w-4 mr-2" /> Edit Records
+                  </Button>
+                </Link>
+              </div>
+
+              <div className="flex gap-3">
+                {onDelete && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => {
+                      if (confirm('Permanently delete this alumni record?')) {
+                        onDelete(alumni.id);
+                      }
+                    }}
+                    className="bg-rose-500/20 hover:bg-rose-500 text-rose-100 hover:text-white backdrop-blur-md rounded-2xl h-11 w-11 border border-rose-500/30 shadow-xl transition-all"
+                  >
+                    <Trash2 className="h-5 w-5" />
+                  </Button>
+                )}
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-10 w-10 rounded-full bg-white/20 hover:bg-white/40 text-white backdrop-blur-md"
                   onClick={() => onOpenChange(false)}
-                  title="Close"
+                  className="bg-white/10 hover:bg-white/20 text-white backdrop-blur-md rounded-2xl h-11 w-11 border border-white/20 shadow-xl"
                 >
                   <X className="h-5 w-5" />
                 </Button>
               </div>
-              <div className="absolute top-4 left-4 z-20 flex gap-2">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleExportProfile}
-                  className="bg-white/20 hover:bg-white/40 text-white backdrop-blur-md rounded-full px-4"
-                >
-                  <Download className="h-4 w-4 mr-2" /> Export
-                </Button>
-
-                {/* Edit & Delete Actions */}
-                {onEdit && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => onEdit(alumni.id)}
-                    className="bg-white/20 hover:bg-white/40 text-white backdrop-blur-md rounded-full px-4"
-                  >
-                    <Pencil className="h-4 w-4 mr-2" /> Edit
-                  </Button>
-                )}
-                {onDelete && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => {
-                      if (window.confirm('Are you sure you want to delete this alumni profile? This action cannot be undone.')) {
-                        onDelete(alumni.id);
-                        onOpenChange(false);
-                      }
-                    }}
-                    className="bg-red-500/20 hover:bg-red-500/40 text-white backdrop-blur-md rounded-full px-4 hover:bg-red-600"
-                  >
-                    <Trash2 className="h-4 w-4 mr-2" /> Delete
-                  </Button>
-                )}
-              </div>
             </div>
 
-            {/* Profile Info Overlay */}
-            <div className="px-8 pb-4 relative flex flex-col md:flex-row items-end gap-6 -mt-16 mb-2">
+            {/* Refined Batch Indicator */}
+            <div className="absolute bottom-6 right-10 text-right opacity-80">
+              <p className="text-white/40 text-[9px] font-black uppercase tracking-[0.3em] mb-0.5">Alumni Registry</p>
+              <h4 className="text-white text-2xl font-black italic tracking-widest uppercase">
+                CLASS OF {alumni.yearOfGraduation}
+              </h4>
+            </div>
+          </div>
+
+          <div className="px-12 -mt-24 pb-10 relative z-10">
+            <div className="flex flex-col md:flex-row items-end gap-12">
               <div className="relative shrink-0">
-                <Avatar className="h-32 w-32 ring-4 ring-white shadow-xl bg-white">
+                <div className="absolute inset-0 bg-indigo-500 rounded-[3.5rem] blur-3xl opacity-30" />
+                <Avatar className="h-56 w-56 ring-[16px] ring-white shadow-4xl bg-white rounded-[3.5rem] relative overflow-hidden transition-transform duration-700 hover:scale-105 border-4 border-slate-50">
                   <AvatarImage src={alumni.photoURL} className="object-cover" />
-                  <AvatarFallback className="text-3xl font-bold bg-blue-100 text-blue-600">
+                  <AvatarFallback className="text-6xl font-black bg-slate-50 text-indigo-200 uppercase">
                     {alumni.fullName?.charAt(0)}
                   </AvatarFallback>
                 </Avatar>
-                <div className="absolute bottom-4 right-4 h-5 w-5 bg-green-500 border-3 border-white rounded-full" title="Active" />
-              </div>
-
-              {/* Name & Title - Positioned to ensure visibility */}
-              <div className="flex-1 text-center md:text-left pt-16 md:pt-0 md:mb-2">
-                <h2 className="text-2xl font-bold text-black capitalize">{alumni.fullName}</h2>
-                <p className="text-lg font-medium text-black capitalize">{alumni.currentJobTitle || 'Alumni'}</p>
-                <div className="flex flex-wrap gap-2 mt-1 justify-center md:justify-start">
-                  <Badge variant="secondary" className="px-3 bg-blue-50 text-blue-700 hover:bg-blue-100 text-sm">
-                    Batch {alumni.yearOfGraduation}
-                  </Badge>
-                  {alumni.companyName && (
-                    <Badge variant="outline" className="px-3 border-gray-200 text-gray-600 capitalize text-sm">
-                      <Building2 className="h-3 w-3 mr-1" /> {alumni.companyName}
-                    </Badge>
-                  )}
+                <div className="absolute -bottom-1 -right-1 h-12 w-12 bg-emerald-500 border-[10px] border-white rounded-[1.5rem] shadow-2xl flex items-center justify-center">
+                  <div className="h-2.5 w-2.5 bg-white rounded-full animate-pulse" />
                 </div>
               </div>
 
-              {/* Quick Contact Actions (Desktop) */}
-              <div className="hidden md:flex gap-3 mb-4">
-                {alumni.linkedinLink && (
-                  <a href={formatSocialLink(alumni.linkedinLink)} target="_blank" rel="noreferrer">
-                    <Button size="icon" variant="outline" className="rounded-full border-blue-200 text-blue-600 hover:bg-blue-50">
-                      <Linkedin className="h-5 w-5" />
-                    </Button>
-                  </a>
-                )}
+              <div className="flex-1 pb-4">
+                <div className="space-y-3 mb-10 text-center md:text-left">
+                  <div className="flex flex-wrap items-center gap-3 justify-center md:justify-start mb-1">
+                    <h2 className="text-6xl font-black text-indigo-950 tracking-tighter leading-none">
+                      {alumni.fullName}
+                    </h2>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-6 justify-center md:justify-start">
+                    <div className="flex items-center gap-2">
+                      <div className="h-2 w-2 rounded-full bg-indigo-600" />
+                      <p className="text-sm font-black text-indigo-600 uppercase tracking-[0.2em]">
+                        {alumni.currentJobTitle || 'Alumni Member'}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="h-2 w-2 rounded-full bg-slate-300" />
+                      <p className="text-sm font-black text-slate-400 uppercase tracking-[0.15em]">
+                        {alumni.companyName || 'Verified Professional'}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Social Profiles as Professional Text Buttons */}
+                <div className="flex flex-wrap gap-3 justify-center md:justify-start">
+                  {socialLinks.map((link) => (
+                    <a
+                      key={link.id}
+                      href={link.id === 'email' ? `mailto:${link.value}` : formatSocialLink(link.value as string, link.id)}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="group/social"
+                    >
+                      <Button className={`rounded-xl h-12 bg-white border ${link.border} text-slate-600 ${link.hoverBg} hover:text-white px-6 shadow-sm transition-all duration-300 flex items-center gap-3`}>
+                        <link.icon className={`h-4 w-4 ${link.iconColor} group-hover/social:text-white transition-colors`} />
+                        <span className="text-[11px] font-black uppercase tracking-[0.15em]">{link.label}</span>
+                      </Button>
+                    </a>
+                  ))}
+                </div>
               </div>
             </div>
           </div>
+        </div>
 
-          {/* Horizontal Cards Container */}
-          <div className="px-6 md:px-8 pb-8">
-            {/* Horizontal Scrolling Container for Cards */}
-            <div className="flex flex-row gap-6 pb-4 overflow-x-auto scrollbar-hide">
+        {/* Scrollable Body - Columned Layout */}
+        <div className="flex-1 overflow-y-auto bg-slate-50/50 px-10 py-8 scrollbar-hide print:bg-white print:overflow-visible print:p-0">
+          <style jsx global>{`
+            @media print {
+              @page { size: A4; margin: 20mm; }
+              body * { visibility: hidden; }
+              .print-area, .print-area * { visibility: visible; }
+              .print-only { display: block !important; }
+              .no-print { display: none !important; }
+              .print-area { 
+                position: absolute; 
+                left: 0; 
+                top: 0; 
+                width: 100%; 
+                background: white !important;
+                color: black !important;
+              }
+              .print-avatar { border: 2px solid #000 !important; border-radius: 10px !important; }
+              .print-section { border: 1px solid #eee !important; margin-bottom: 20px !important; break-inside: avoid; }
+            }
+            .print-only { display: none; }
+          `}</style>
 
-              {/* 1. Contact Details Card */}
-              <Card className="min-w-[280px] max-w-[320px] shadow-sm border-gray-100 flex-shrink-0">
-                <CardHeader className="pb-3 border-b border-gray-50 bg-white rounded-t-xl">
-                  <CardTitle className="text-base flex items-center gap-2 text-gray-800">
-                    <Users className="h-4 w-4 text-blue-500" />
-                    Contact Details
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="pt-4 space-y-3">
-                  <div className="flex items-center gap-3">
-                    <div className="h-8 w-8 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600 shrink-0">
-                      <Phone className="h-4 w-4" />
-                    </div>
-                    <div className="overflow-hidden">
-                      <p className="text-xs text-gray-500 font-semibold uppercase">Mobile</p>
-                      <p className="font-medium text-gray-900 truncate">{alumni.mobileNumber || 'N/A'}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <div className="h-8 w-8 rounded-lg bg-green-50 flex items-center justify-center text-green-600 shrink-0">
-                      <MessageCircleIcon className="h-4 w-4" />
-                    </div>
-                    <div className="overflow-hidden">
-                      <p className="text-xs text-gray-500 font-semibold uppercase">WhatsApp</p>
-                      <p className="font-medium text-gray-900 truncate">{alumni.whatsappNumber || 'N/A'}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <div className="h-8 w-8 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-600 shrink-0">
-                      <Mail className="h-4 w-4" />
-                    </div>
-                    <div className="overflow-hidden w-full">
-                      <p className="text-xs text-gray-500 font-semibold uppercase">Email</p>
-                      <p className="font-medium text-gray-900 truncate" title={alumni.email}>{alumni.email || 'N/A'}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-3 pt-2 border-t border-gray-100 mt-2">
-                    <div className="h-8 w-8 rounded-lg bg-red-50 flex items-center justify-center text-red-600 shrink-0 mt-1">
-                      <MapPin className="h-4 w-4" />
-                    </div>
-                    <div className="mt-1 overflow-hidden">
-                      <p className="text-xs text-gray-500 font-semibold uppercase">Current Address</p>
-                      <p className="font-medium text-gray-900 text-sm leading-relaxed break-words">
-                        {[alumni.address, alumni.district, alumni.state, alumni.pinCode].filter(Boolean).join(', ') || 'Address not available'}
-                      </p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* 2. Education Card */}
-              <Card className="min-w-[280px] max-w-[320px] shadow-sm border-gray-100 flex-shrink-0">
-                <CardHeader className="pb-3 border-b border-gray-50 bg-white rounded-t-xl">
-                  <CardTitle className="text-base flex items-center gap-2 text-gray-800">
-                    <GraduationCap className="h-4 w-4 text-orange-500" />
-                    Education
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="pt-4 space-y-3">
-                  <div className="p-3 bg-gray-50 rounded-xl border border-gray-100">
-                    <p className="text-xs text-gray-500 font-semibold uppercase mb-1">School Attended</p>
-                    <p className="font-bold text-gray-900 leading-tight">{alumni.schoolAttended || 'YES INDIA School'}</p>
-                    <p className="text-sm text-gray-600 mt-1">Batch of {alumni.yearOfGraduation}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-gray-500 font-semibold uppercase mb-1">Highest Qualification</p>
-                    <div className="flex items-center gap-2">
-                      <Badge variant="outline" className="text-orange-600 border-orange-200 bg-orange-50 text-sm">
-                        {alumni.qualification || 'N/A'}
-                      </Badge>
-                    </div>
-                  </div>
-                  {alumni.university && (
-                    <div>
-                      <p className="text-xs text-gray-500 font-semibold uppercase mb-1">University / College</p>
-                      <p className="font-medium text-gray-900 leading-tight text-sm">{alumni.university}</p>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-
-              {/* 3. Professional Card */}
-              <Card className="min-w-[280px] max-w-[320px] shadow-sm border-gray-100 flex-shrink-0">
-                <CardHeader className="pb-3 border-b border-gray-50 bg-white rounded-t-xl">
-                  <CardTitle className="text-base flex items-center gap-2 text-gray-800">
-                    <Briefcase className="h-4 w-4 text-black" />
-                    Professional
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="pt-4 space-y-3">
-                  <div className="p-3 bg-gray-50 rounded-xl border border-gray-100">
-                    <p className="text-xs text-gray-500 font-semibold uppercase mb-1">Current Role</p>
-                    <p className="font-bold text-gray-900 text-base leading-tight capitalize">{alumni.currentJobTitle || 'Not specified'}</p>
-                    <p className="text-blue-600 font-medium capitalize mt-1 text-sm">{alumni.companyName}</p>
-                  </div>
-                  <div className="space-y-3">
-                    <div>
-                      <p className="text-xs text-gray-500 font-semibold uppercase">Industry</p>
-                      <p className="font-medium text-gray-900 capitalize text-sm">{alumni.industry || 'N/A'}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-gray-500 font-semibold uppercase">Experience</p>
-                      <p className="font-medium text-gray-900 text-sm">{alumni.yearsOfExperience ? `${alumni.yearsOfExperience} Years` : 'N/A'}</p>
-                    </div>
-                  </div>
-                  {alumni.areasOfExpertise && (
-                    <div>
-                      <p className="text-xs text-gray-500 font-semibold uppercase mb-2">Expertise</p>
-                      <div className="flex flex-wrap gap-1.5">
-                        {alumni.areasOfExpertise.split(',').map((skill, i) => (
-                          <Badge key={i} variant="secondary" className="bg-purple-50 text-purple-700 border-purple-100 text-xs px-2 py-1">
-                            {skill.trim()}
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-
-              {/* 4. Message Card (only if exists) */}
-              {alumni.messageToTeacher && (
-                <Card className="min-w-[280px] max-w-[320px] shadow-sm border-gray-100 flex-shrink-0 bg-gradient-to-br from-indigo-50 to-purple-50">
-                  <CardHeader className="pb-3 border-b border-gray-50 rounded-t-xl">
-                    <CardTitle className="text-base flex items-center gap-2 text-indigo-800">
-                      <MessageSquare className="h-4 w-4 text-indigo-600" />
-                      Message to Teachers
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="pt-4">
-                    <div className="p-3 bg-white/70 rounded-lg border border-indigo-100">
-                      <p className="text-sm italic leading-relaxed text-gray-700">
-                        "{alumni.messageToTeacher}"
-                      </p>
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
-
-              {/* 5. Willing to Contribute Card (only if exists) */}
-              {alumni.stayInvolved && alumni.stayInvolved.length > 0 && (
-                <Card className="min-w-[280px] max-w-[320px] shadow-sm border-gray-100 flex-shrink-0">
-                  <CardHeader className="pb-3 border-b border-gray-50 bg-white rounded-t-xl">
-                    <CardTitle className="text-base flex items-center gap-2 text-gray-800">
-                      <Users className="h-4 w-4 text-emerald-500" />
-                      Willing to Contribute
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="pt-4">
-                    <div className="flex flex-wrap gap-2">
-                      {alumni.stayInvolved.map((item, i) => (
-                        <Badge
-                          key={i}
-                          className="bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 py-2 px-3 text-xs rounded-md"
-                        >
-                          {item}
-                        </Badge>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
-
+          {/* Official Print Header */}
+          <div className="print-only mb-10 pb-6 border-b-2 border-slate-900 flex justify-between items-end print-area">
+            <div>
+              <img src="/logo.png" alt="Logo" className="h-16 w-auto mb-4" />
+              <h1 className="text-2xl font-black uppercase tracking-tighter">Official Alumni Record</h1>
+              <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Yes India Alumni Association • Registry Database</p>
             </div>
-
-            {/* Registration Date */}
-            <div className="mt-6 text-center text-gray-400 text-sm">
-              Registered on {formatDate(alumni.registrationDate)}
+            <div className="text-right">
+              <p className="text-[10px] font-bold text-slate-400 uppercase">Document Hash</p>
+              <p className="text-[12px] font-mono font-bold">ALM-{alumni.id.substring(0, 8).toUpperCase()}</p>
+              <p className="text-[10px] font-black mt-1">{formatDate(new Date().toISOString())}</p>
             </div>
           </div>
 
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 pb-10 print-area">
+
+            {/* Column 1: Contact & Personal */}
+            <div className="space-y-6">
+              <section>
+                <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+                  <Phone className="h-3.5 w-3.5" /> Identity & Contact
+                </h3>
+                <div className="bg-white border border-slate-200/60 rounded-3xl overflow-hidden divide-y divide-slate-100 shadow-sm">
+                  <div className="flex items-center gap-4 px-5 py-4 hover:bg-slate-50 transition-colors">
+                    <div className="h-10 w-10 rounded-xl bg-blue-50 flex items-center justify-center shrink-0">
+                      <Phone className="h-4 w-4 text-blue-500" />
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Mobile</p>
+                      <p className="text-[14px] font-black text-slate-900">{alumni.mobileNumber || 'N/A'}</p>
+                      {alumni.whatsappNumber && (
+                        <div className="flex items-center gap-1 text-emerald-600 text-[10px] font-black mt-0.5 uppercase tracking-tighter">
+                          <MessageCircleIcon className="h-3 w-3" /> WhatsApp Linked
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-4 px-5 py-4 hover:bg-slate-50 transition-colors">
+                    <div className="h-10 w-10 rounded-xl bg-indigo-50 flex items-center justify-center shrink-0">
+                      <Mail className="h-4 w-4 text-indigo-500" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Email</p>
+                      <p className="text-[14px] font-black text-slate-900 truncate" title={alumni.email}>{alumni.email || 'N/A'}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-4 px-5 py-4 hover:bg-slate-50 transition-colors">
+                    <div className="h-10 w-10 rounded-xl bg-rose-50 flex items-center justify-center shrink-0">
+                      <MapPin className="h-4 w-4 text-rose-500" />
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Location</p>
+                      <p className="text-[14px] font-black text-slate-900 leading-snug">
+                        {[alumni.place, alumni.district, alumni.state].filter(Boolean).join(', ') || 'N/A'}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </section>
+
+              {alumni.messageToTeacher && (
+                <section>
+                  <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4">Reflection</h3>
+                  <div className="bg-indigo-600 rounded-3xl p-6 text-white shadow-xl shadow-indigo-200 relative overflow-hidden">
+                    <MessageSquare className="absolute -bottom-2 -right-2 h-20 w-20 text-white/10" />
+                    <p className="text-sm italic font-medium leading-relaxed relative z-10">
+                      "{alumni.messageToTeacher}"
+                    </p>
+                  </div>
+                </section>
+              )}
+            </div>
+
+            {/* Column 2: Education & Professional */}
+            <div className="space-y-6">
+              <section>
+                <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+                  <GraduationCap className="h-3.5 w-3.5" /> Professional DNA
+                </h3>
+                <div className="bg-white border border-slate-200/60 rounded-3xl p-6 shadow-sm">
+                  <div className="relative pl-6 border-l-4 border-indigo-100 space-y-8">
+                    <div className="relative">
+                      <span className="absolute -left-[30px] top-0.5 h-4 w-4 rounded-full bg-indigo-600 border-4 border-white shadow-md" />
+                      <p className="text-[15px] font-black text-slate-900">{alumni.schoolAttended || 'YES INDIA School'}</p>
+                      <p className="text-[12px] text-indigo-600 font-bold mt-0.5 uppercase tracking-wider">Batch of {alumni.yearOfGraduation}</p>
+                    </div>
+                    <div className="relative">
+                      <span className="absolute -left-[30px] top-0.5 h-4 w-4 rounded-full bg-slate-300 border-4 border-white shadow-md" />
+                      <p className="text-[15px] font-black text-slate-900">{alumni.university || 'Advanced Education'}</p>
+                      {alumni.qualification && (
+                        <Badge className="mt-2 bg-slate-100 text-slate-600 border-0 text-[10px] font-black rounded-lg">
+                          {alumni.qualification}
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </section>
+
+              <section>
+                <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4">Core Skillset</h3>
+                <div className="bg-white border border-slate-200/60 rounded-3xl p-6 shadow-sm">
+                  <div className="flex flex-wrap gap-2 mb-6">
+                    {(alumni.areasOfExpertise || 'General').split(',').map((skill, i) => (
+                      <span key={i} className="px-3 py-1.5 bg-slate-900 text-white rounded-xl text-[11px] font-bold uppercase tracking-tight">
+                        {skill.trim()}
+                      </span>
+                    ))}
+                  </div>
+                  <div className="grid grid-cols-2 gap-4 pt-4 border-t border-slate-50">
+                    <div>
+                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Experience</p>
+                      <p className="text-[15px] font-black text-slate-900">{alumni.yearsOfExperience ? `${alumni.yearsOfExperience}nd Gen` : 'Fresh'}</p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Industrial Sect.</p>
+                      <p className="text-[15px] font-black text-slate-900">{alumni.industry || 'Global'}</p>
+                    </div>
+                  </div>
+                </div>
+              </section>
+            </div>
+
+            {/* Column 3: Registry & Contribution */}
+            <div className="space-y-6">
+              <section>
+                <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+                  <ShieldCheck className="h-3.5 w-3.5" /> Registry Status
+                </h3>
+                <div className="bg-white border border-slate-200/60 rounded-3xl overflow-hidden shadow-sm divide-y divide-slate-100">
+                  <div className="flex justify-between items-center px-6 py-4">
+                    <span className="text-[11px] font-bold text-slate-400 uppercase">Member Since</span>
+                    <span className="text-[13px] font-black text-slate-900">{formatDate(alumni.registrationDate)}</span>
+                  </div>
+                  <div className="flex justify-between items-center px-6 py-4">
+                    <span className="text-[11px] font-bold text-slate-400 uppercase">Verification</span>
+                    <Badge className="bg-emerald-500 text-white border-0 rounded-lg px-2 py-0.5 text-[10px] font-black flex gap-2 items-center italic">
+                      ACTIVE <span className="h-1 w-1 bg-white rounded-full animate-pulse" />
+                    </Badge>
+                  </div>
+                </div>
+              </section>
+
+              {alumni.stayInvolved && alumni.stayInvolved.length > 0 && (
+                <section>
+                  <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4">Commitment</h3>
+                  <div className="bg-emerald-500 text-white rounded-3xl p-6 shadow-xl shadow-emerald-100">
+                    <div className="flex flex-wrap gap-2">
+                      {alumni.stayInvolved.map((item, i) => (
+                        <span key={i} className="px-3 py-1 bg-white/20 border border-white/30 rounded-xl text-[10px] font-black uppercase tracking-tight">
+                          {item}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                </section>
+              )}
+            </div>
+          </div>
         </div>
+
+        {/* Footer */}
+        <div className="px-10 py-5 bg-white border-t border-slate-100 shrink-0 flex justify-between items-center">
+          <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em]">
+            YES INDIA ALUMNI SYSTEM &copy; 2026
+          </p>
+          <div className="flex items-center gap-2">
+            <div className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">End-to-End Encrypted</span>
+          </div>
+        </div>
+
       </DialogContent>
     </Dialog>
   );

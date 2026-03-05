@@ -34,7 +34,12 @@ import {
   TrendingUp,
   Grid3x3,
   Calendar,
-  Building2
+  Building2,
+  Zap,
+  CheckCircle2,
+  ArrowUpRight,
+  Plus,
+  X
 } from 'lucide-react';
 
 // Import components
@@ -60,12 +65,13 @@ const Dashboard = () => {
   const [filteredAlumni, setFilteredAlumni] = useState<AlumniWithId[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedAlumni, setSelectedAlumni] = useState<AlumniWithId | null>(null);
+  const [selectedAlumni, setSelectedAlumni] = useState<any>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid');
   const [selectedYear, setSelectedYear] = useState<string>('all');
-  const [displayCount, setDisplayCount] = useState(12);
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 24;
 
   const [stats, setStats] = useState({
     totalAlumni: 0,
@@ -75,7 +81,6 @@ const Dashboard = () => {
   });
 
   useEffect(() => {
-    // Fix: Use 'alumni' path as per firebaseService.ts
     const alumniRef = ref(database, 'alumni');
 
     const unsubscribe = onValue(alumniRef, (snapshot) => {
@@ -83,7 +88,6 @@ const Dashboard = () => {
       if (data) {
         const alumniArray: AlumniWithId[] = [];
         Object.entries(data).forEach(([firebaseKey, alumniData]) => {
-          // Basic validation or type assertion
           if (typeof alumniData === 'object' && alumniData !== null) {
             alumniArray.push({
               id: firebaseKey,
@@ -92,27 +96,22 @@ const Dashboard = () => {
           }
         });
 
-        // Filter approved and sort (Temporarily allowing all for visibility if needed, or stick to approved)
-        // If 'status' is missing in some records, default to 'approved' for legacy or show all?
-        // Let's show ALL for now to fix "data not loading" complaint, or at least log it.
-        const approvedAlumni = alumniArray
-          // .filter(a => a.data.status === 'approved') // DATA LOADING FIX: Commented out to ensure data is visible
-          .sort((a, b) => (b.data.registrationDate ? new Date(b.data.registrationDate).getTime() : 0) - (a.data.registrationDate ? new Date(a.data.registrationDate).getTime() : 0));
+        const sortedAlumni = alumniArray.sort((a, b) => (b.data.registrationDate ? new Date(b.data.registrationDate).getTime() : 0) - (a.data.registrationDate ? new Date(a.data.registrationDate).getTime() : 0));
 
-        setAlumniList(approvedAlumni);
-        setFilteredAlumni(approvedAlumni);
+        setAlumniList(sortedAlumni);
+        setFilteredAlumni(sortedAlumni);
 
         // Stats Calculation
-        const uniqueSchools = new Set(approvedAlumni.map((a) => a.data.schoolAttended)).size;
-        const uniqueCompanies = new Set(approvedAlumni.map((a) => a.data.companyName)).size;
+        const uniqueSchools = new Set(sortedAlumni.map((a) => a.data.schoolAttended).filter(Boolean)).size;
+        const uniqueCompanies = new Set(sortedAlumni.map((a) => a.data.companyName).filter(Boolean)).size;
         const thirtyDaysAgo = Date.now() - 30 * 24 * 60 * 60 * 1000;
-        const recentCount = approvedAlumni.filter((a) => {
+        const recentCount = sortedAlumni.filter((a) => {
           const d = a.data.registrationDate ? new Date(a.data.registrationDate).getTime() : 0;
           return d > thirtyDaysAgo;
         }).length;
 
         setStats({
-          totalAlumni: approvedAlumni.length,
+          totalAlumni: sortedAlumni.length,
           totalSchools: uniqueSchools,
           totalCompanies: uniqueCompanies,
           recentRegistrations: recentCount,
@@ -132,12 +131,10 @@ const Dashboard = () => {
   useEffect(() => {
     let result = alumniList;
 
-    // Filter by Year
     if (selectedYear !== 'all') {
       result = result.filter(a => a.data.yearOfGraduation === selectedYear);
     }
 
-    // Filter by Search
     if (searchTerm.trim() !== '') {
       const term = searchTerm.toLowerCase();
       result = result.filter(a =>
@@ -145,26 +142,30 @@ const Dashboard = () => {
         a.data.schoolAttended?.toLowerCase().includes(term) ||
         a.data.currentJobTitle?.toLowerCase().includes(term) ||
         a.data.companyName?.toLowerCase().includes(term) ||
-        a.data.mobileNumber?.includes(term)
+        a.data.mobileNumber?.includes(term) ||
+        a.data.place?.toLowerCase().includes(term) ||
+        a.data.district?.toLowerCase().includes(term)
       );
     }
 
     setFilteredAlumni(result);
-    setDisplayCount(12);
+    setCurrentPage(1);
   }, [searchTerm, selectedYear, alumniList]);
 
   const graduationYears = Array.from(new Set(alumniList.map(a => a.data.yearOfGraduation).filter(Boolean))).sort().reverse();
 
-  // Handlers
   const handleViewDetails = (alumni: AlumniWithId) => {
-    setSelectedAlumni(alumni);
+    // Unify to flat structure for state
+    // IMPORTANT: Set id AFTER spreading data to ensure ID from Firebase is the source of truth
+    setSelectedAlumni({ ...alumni.data, id: alumni.id } as any);
     setIsDialogOpen(true);
   };
 
   const handleEditAlumni = (id: string) => {
     const found = alumniList.find(a => a.id === id);
     if (found) {
-      setSelectedAlumni(found);
+      // Set id AFTER spreading data
+      setSelectedAlumni({ ...found.data, id: found.id } as any);
       setIsEditOpen(true);
     }
   };
@@ -177,7 +178,10 @@ const Dashboard = () => {
         updatedAt: Date.now()
       });
       setIsEditOpen(false);
-      // Don't nullify selectedAlumni immediately so the dialog updates visibly
+      // Refresh the local selected alumni if it's the one being edited
+      if (selectedAlumni && (selectedAlumni as any).id === id) {
+        setSelectedAlumni({ ...cleanData, id } as any);
+      }
     } catch (e) {
       console.error("Update failed", e);
       alert("Update failed");
@@ -185,7 +189,7 @@ const Dashboard = () => {
   };
 
   const handleDeleteAlumni = async (id: string) => {
-    if (!window.confirm("Delete this profile?")) return;
+    if (!window.confirm("Permanently delete this alumni profile?")) return;
     try {
       await remove(ref(database, `alumni/${id}`));
       setIsDialogOpen(false);
@@ -200,7 +204,7 @@ const Dashboard = () => {
       id: alumni.id,
       ...alumni.data
     }));
-    exportAlumniToCSV(exportData, `yes-india-alumni-${new Date().toISOString().split('T')[0]}`);
+    exportAlumniToCSV(exportData, `yes-india-alumni-export-${new Date().toISOString().split('T')[0]}`);
   };
 
   const handleYearFilterChange = (year: string) => setSelectedYear(year);
@@ -212,32 +216,32 @@ const Dashboard = () => {
       value: stats.totalAlumni,
       icon: <Users className="h-6 w-6" />,
       description: 'Registered members',
-      gradient: 'from-blue-500 to-blue-600',
-      bgGradient: 'from-blue-50 to-blue-100',
+      gradient: 'from-indigo-600 to-blue-700',
+      bgGradient: 'from-indigo-50 to-indigo-100',
     },
     {
       title: 'YES INDIA Schools',
       value: stats.totalSchools,
       icon: <School className="h-6 w-6" />,
       description: 'Represented schools',
-      gradient: 'from-green-500 to-green-600',
-      bgGradient: 'from-green-50 to-green-100',
+      gradient: 'from-emerald-500 to-teal-600',
+      bgGradient: 'from-emerald-50 to-emerald-100',
     },
     {
       title: 'Companies',
       value: stats.totalCompanies,
       icon: <Building2 className="h-6 w-6" />,
-      description: 'Organizations',
-      gradient: 'from-purple-500 to-purple-600',
-      bgGradient: 'from-purple-50 to-purple-100',
+      description: 'Represented companies',
+      gradient: 'from-amber-500 to-orange-600',
+      bgGradient: 'from-amber-50 to-amber-100',
     },
     {
-      title: 'Recent',
+      title: 'New Registrants',
       value: stats.recentRegistrations,
-      icon: <TrendingUp className="h-6 w-6" />,
-      description: 'Last 30 days',
-      gradient: 'from-orange-500 to-orange-600',
-      bgGradient: 'from-orange-50 to-orange-100',
+      icon: <Zap className="h-6 w-6" />,
+      description: 'Growing community',
+      gradient: 'from-rose-500 to-pink-600',
+      bgGradient: 'from-rose-50 to-rose-100',
     },
   ];
 
@@ -246,203 +250,180 @@ const Dashboard = () => {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 relative overflow-hidden">
-      {/* Premium Background Effects */}
-      <div className="absolute top-0 left-0 w-full h-[500px] bg-gradient-to-b from-blue-600/10 to-transparent pointer-events-none" />
-      <div className="absolute top-[-20%] right-[-10%] w-[600px] h-[600px] rounded-full bg-purple-200/40 blur-[100px] pointer-events-none" />
-      <div className="absolute top-[20%] left-[-10%] w-[400px] h-[400px] rounded-full bg-blue-200/40 blur-[100px] pointer-events-none" />
+    <div className="min-h-screen bg-[#F8FAFC] relative overflow-hidden font-sans">
+      {/* Dynamic Background Elements */}
+      <div className="absolute top-0 left-0 w-full h-[600px] bg-gradient-to-b from-indigo-600/5 via-transparent to-transparent pointer-events-none" />
+      <div className="absolute -top-[10%] -right-[10%] w-[800px] h-[800px] rounded-full bg-blue-100/30 blur-[120px] pointer-events-none" />
+      <div className="absolute top-[20%] -left-[10%] w-[600px] h-[600px] rounded-full bg-indigo-100/30 blur-[120px] pointer-events-none" />
 
-      <DashboardHeader />
+      <DashboardHeader
+        searchTerm={searchTerm}
+        onSearchChange={setSearchTerm}
+      />
 
-      <div className="container mx-auto px-4 py-8 lg:py-12 relative z-10 max-w-7xl">
-        {/* Statistics Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+      <div className="w-full px-8 py-10 lg:py-16 relative z-10">
+        <header className="mb-12">
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.6 }}
+          >
+            <h1 className="text-4xl md:text-5xl font-black text-slate-900 tracking-tight flex items-center gap-4">
+              <div className="p-3 bg-indigo-600 rounded-2xl shadow-xl shadow-indigo-200">
+                <Grid3x3 className="h-8 w-8 text-white" />
+              </div>
+              Control Center
+            </h1>
+            <p className="mt-4 text-slate-500 font-medium text-lg ml-2 max-w-2xl leading-relaxed">
+              Empower and connect the YES INDIA alumni ecosystem. Manage registrations, analyze professional trends, and foster community growth.
+            </p>
+          </motion.div>
+        </header>
+
+        {/* Statistics Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 mb-16">
           {statsCards.map((stat, index) => (
-            <div key={index} className="h-full">
+            <div key={index}>
               <StatsCard {...stat} index={index} />
             </div>
           ))}
         </div>
 
-        {/* Main Content Card */}
+        {/* Main Interface */}
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
+          initial={{ opacity: 0, y: 40 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.4 }}
+          transition={{ duration: 0.8, delay: 0.2 }}
         >
-          <Card className="border-0 shadow-2xl backdrop-blur-xl bg-white/80 overflow-hidden ring-1 ring-black/5">
-            <CardHeader className="bg-gradient-to-r from-white via-blue-50/50 to-white border-b px-8 py-8">
-              <div className="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-6">
-                <div>
-                  <CardTitle className="text-3xl font-bold text-gray-900 flex items-center gap-4">
-                    <div className="p-3 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl shadow-lg text-white">
-                      <Users className="h-6 w-6" />
-                    </div>
-                    <span>Alumni Directory</span>
-                  </CardTitle>
-                  <CardDescription className="text-base mt-2 ml-16 text-gray-500">
-                    Browse and manage <span className="font-semibold text-blue-600">{filteredAlumni.length}</span> registered alumni
-                    {selectedYear !== 'all' && <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 ml-2">Batch {selectedYear}</span>}
+          <Card className="border-0 shadow-[0_20px_50px_rgba(0,0,0,0.05)] rounded-[2.5rem] bg-white/70 backdrop-blur-2xl overflow-hidden ring-1 ring-slate-200/50">
+            <CardHeader className="p-10 pb-6 border-b border-slate-100">
+              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-8">
+                <div className="space-y-2">
+                  <div className="flex items-center gap-3">
+                    <span className="h-3 w-3 rounded-full bg-emerald-500 animate-pulse" />
+                    <CardTitle className="text-2xl font-black text-slate-900">Alumni Directory</CardTitle>
+                  </div>
+                  <CardDescription className="text-slate-500 font-medium text-base">
+                    Curating <span className="text-indigo-600 font-bold">{filteredAlumni.length}</span> verified profiles
+                    {selectedYear !== 'all' && <span className="text-slate-400"> for Batch {selectedYear}</span>}
                   </CardDescription>
                 </div>
-                <Button
-                  onClick={handleExportData}
-                  className="bg-gray-900 hover:bg-gray-800 text-white shadow-xl hover:shadow-2xl transition-all duration-300 rounded-xl px-6"
-                  disabled={filteredAlumni.length === 0}
-                  size="lg"
-                >
-                  <Download className="mr-2 h-5 w-5" />
-                  Export Data
-                </Button>
+
+                <div className="flex flex-wrap items-center gap-4">
+                  <Button
+                    onClick={handleExportData}
+                    className="bg-slate-900 hover:bg-slate-800 text-white shadow-lg hover:shadow-slate-200 transition-all duration-300 rounded-2xl px-6 h-12 font-bold"
+                    disabled={filteredAlumni.length === 0}
+                  >
+                    <Download className="mr-2 h-5 w-5" />
+                    Export CSV
+                  </Button>
+                  {/* Add NEW button if needed */}
+                </div>
               </div>
 
-              {/* Filters and Search Bar */}
-              <div className="mt-8 space-y-6">
-                {/* Search Bar */}
-                <div className="relative group">
-                  <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl blur opacity-25 group-hover:opacity-50 transition duration-1000 group-hover:duration-200" />
-                  <div className="relative">
-                    <Search className="absolute left-5 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 group-focus-within:text-blue-500 transition-colors" />
+              {/* Advanced Filters */}
+              <div className="mt-10 space-y-6">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                  <div className="lg:col-span-2 relative group">
+                    <Search className="absolute left-5 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 group-focus-within:text-indigo-600 transition-colors" />
                     <Input
                       type="text"
-                      placeholder="Search by name, school, company, or location..."
+                      placeholder="Search by name, expertise, location, or school..."
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
-                      className="pl-14 py-7 text-lg border-gray-200 focus:border-blue-500 focus:ring-blue-500/20 rounded-xl shadow-sm bg-white"
+                      className="pl-14 h-14 bg-slate-50/50 border-slate-100 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 rounded-2xl text-slate-900 font-medium"
                     />
                     {searchTerm && (
+                      <button
+                        onClick={() => setSearchTerm('')}
+                        className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-rose-500 transition-colors"
+                      >
+                        <X className="h-5 w-5" />
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="flex items-center gap-3">
+                    <div className="h-14 bg-slate-50/50 border border-slate-100 rounded-2xl px-4 flex items-center gap-3 flex-1">
+                      <Calendar className="h-5 w-5 text-indigo-500" />
+                      <select
+                        value={selectedYear}
+                        onChange={(e) => handleYearFilterChange(e.target.value)}
+                        className="bg-transparent border-none outline-none text-slate-600 font-bold text-sm w-full"
+                      >
+                        <option value="all">Every Batch</option>
+                        {graduationYears.map(year => (
+                          <option key={year} value={year}>Class of {year}</option>
+                        ))}
+                      </select>
+                    </div>
+                    {(searchTerm || selectedYear !== 'all') && (
                       <Button
                         variant="ghost"
-                        size="icon"
-                        className="absolute right-2 top-1/2 transform -translate-y-1/2 hover:bg-red-50 hover:text-red-500 rounded-lg"
-                        onClick={() => setSearchTerm('')}
+                        onClick={clearFilters}
+                        className="h-14 w-14 rounded-2xl bg-rose-50 text-rose-500 hover:bg-rose-100"
                       >
-                        <span className="sr-only">Clear search</span>
-                        ×
+                        <Filter className="h-6 w-6" />
                       </Button>
                     )}
                   </div>
-                </div>
-
-                {/* Year Filter */}
-                <div className="flex flex-wrap items-center gap-3 p-4 bg-gray-50/80 rounded-2xl border border-gray-100">
-                  <div className="flex items-center gap-2 mr-2">
-                    <div className="p-2 bg-white rounded-lg shadow-sm text-gray-500">
-                      <Calendar className="h-4 w-4" />
-                    </div>
-                    <span className="text-sm font-semibold text-gray-700">Filter Batch:</span>
-                  </div>
-
-                  <div className="flex flex-wrap gap-2">
-                    <Button
-                      variant={selectedYear === 'all' ? 'default' : 'outline'}
-                      size="sm"
-                      onClick={() => handleYearFilterChange('all')}
-                      className={`rounded-lg px-4 transition-all ${selectedYear === 'all' ? 'bg-gray-900 text-white hover:bg-gray-800 shadow-md transform scale-105' : 'bg-white text-gray-600 hover:bg-gray-100 border-gray-200'}`}
-                    >
-                      All Years
-                    </Button>
-                    {graduationYears.slice(0, 6).map((year) => (
-                      <Button
-                        key={year}
-                        variant={selectedYear === year ? 'default' : 'outline'}
-                        size="sm"
-                        onClick={() => handleYearFilterChange(year)}
-                        className={`rounded-lg transition-all ${selectedYear === year ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-md transform scale-105' : 'bg-white text-gray-600 hover:bg-gray-100 border-gray-200'}`}
-                      >
-                        {year}
-                      </Button>
-                    ))}
-                    {graduationYears.length > 6 && (
-                      <div className="relative group">
-                        <Button variant="outline" size="sm" className="bg-white border-dashed text-gray-500">
-                          More...
-                        </Button>
-                        <div className="absolute z-20 left-0 hidden group-hover:block bg-white shadow-xl ring-1 ring-black/5 rounded-xl p-2 mt-2 min-w-[120px] max-h-60 overflow-y-auto">
-                          {graduationYears.slice(6).map((year) => (
-                            <Button
-                              key={year}
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleYearFilterChange(year)}
-                              className={`w-full justify-start rounded-lg mb-1 ${selectedYear === year ? 'bg-blue-50 text-blue-700' : 'text-gray-600'}`}
-                            >
-                              {year}
-                            </Button>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
-                  {(searchTerm || selectedYear !== 'all') && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={clearFilters}
-                      className="ml-auto text-red-500 hover:text-red-600 hover:bg-red-50 rounded-lg px-3"
-                    >
-                      Clear All
-                    </Button>
-                  )}
                 </div>
               </div>
             </CardHeader>
 
-            <CardContent className="p-8 bg-gray-50/30 min-h-[500px]">
+            <CardContent className="p-10 pt-8 min-h-[600px]">
               <Tabs value={viewMode} onValueChange={(value) => setViewMode(value as 'grid' | 'table')} className="w-full">
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
-                  <TabsList className="grid w-full sm:w-auto grid-cols-2 p-1.5 bg-white border shadow-sm rounded-xl">
-                    <TabsTrigger value="grid" className="rounded-lg data-[state=active]:bg-gray-100 data-[state=active]:text-gray-900 font-medium">
+                <div className="flex items-center justify-between mb-10">
+                  <div className="flex items-center gap-2 text-slate-400 text-sm font-bold uppercase tracking-widest">
+                    <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+                    Real-time Data Sync
+                  </div>
+
+                  <TabsList className="bg-slate-100/50 p-1.5 rounded-2xl ring-1 ring-slate-200/50">
+                    <TabsTrigger value="grid" className="rounded-xl px-6 data-[state=active]:bg-white data-[state=active]:text-indigo-600 data-[state=active]:shadow-sm font-bold py-2.5">
                       <Grid3x3 className="h-4 w-4 mr-2" />
-                      Grid
+                      Visual Grid
                     </TabsTrigger>
-                    <TabsTrigger value="table" className="rounded-lg data-[state=active]:bg-gray-100 data-[state=active]:text-gray-900 font-medium">
+                    <TabsTrigger value="table" className="rounded-xl px-6 data-[state=active]:bg-white data-[state=active]:text-indigo-600 data-[state=active]:shadow-sm font-bold py-2.5">
                       <List className="h-4 w-4 mr-2" />
-                      Table
+                      Data Sheet
                     </TabsTrigger>
                   </TabsList>
-
-                  <div className="text-sm font-medium text-gray-500 bg-white px-4 py-2 rounded-lg border shadow-sm">
-                    Showing <span className="text-gray-900 font-bold">{filteredAlumni.length}</span> of {alumniList.length} alumni
-                  </div>
                 </div>
 
-                {/* Grid View */}
-                <TabsContent value="grid" className="mt-0 outline-none">
+                <TabsContent value="grid" className="mt-0 focus-visible:ring-0">
                   <AnimatePresence mode="wait">
                     {filteredAlumni.length === 0 ? (
                       <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        className="flex flex-col items-center justify-center py-20 bg-white rounded-3xl border border-dashed border-gray-300"
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.95 }}
+                        className="flex flex-col items-center justify-center py-32 bg-slate-50/50 rounded-[2rem] border-2 border-dashed border-slate-200"
                       >
-                        <div className="p-6 bg-blue-50 rounded-full mb-6 relative">
-                          <div className="absolute inset-0 bg-blue-100 rounded-full animate-ping opacity-20" />
-                          <Users className="h-12 w-12 text-blue-500" />
+                        <div className="p-8 bg-white rounded-full shadow-2xl shadow-slate-200 mb-8">
+                          <Users className="h-16 w-16 text-slate-300" />
                         </div>
-                        <h3 className="text-xl font-bold text-gray-900 mb-2">No profiles found</h3>
-                        <p className="text-gray-500 max-w-sm text-center mb-6">
-                          We couldn't find any alumni matching your search. Try adjusting your filters or search terms.
+                        <h3 className="text-2xl font-black text-slate-900 mb-2">No Profiles Match</h3>
+                        <p className="text-slate-500 font-medium text-center max-w-sm mb-8">
+                          We couldn't find any alumni based on your current filters. Try broadening your criteria.
                         </p>
                         <Button
                           onClick={clearFilters}
                           variant="outline"
-                          className="w-full max-w-xs"
+                          className="rounded-xl px-8 border-slate-200 hover:bg-white font-bold"
                         >
-                          Reset Filters
+                          Clear All Filters
                         </Button>
                       </motion.div>
                     ) : (
                       <>
                         <motion.div
-                          initial={{ opacity: 0 }}
-                          animate={{ opacity: 1 }}
-                          className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 pb-10"
+                          layout
+                          className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 pb-12"
                         >
-                          {filteredAlumni.slice(0, displayCount).map((alumni, index) => (
-                            <div key={alumni.id} className="h-[420px]">
+                          {filteredAlumni.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE).map((alumni, index) => (
+                            <div key={alumni.id} className="h-full">
                               <AlumniGridCard
                                 alumni={{ id: alumni.id, ...alumni.data }}
                                 index={index}
@@ -451,91 +432,98 @@ const Dashboard = () => {
                             </div>
                           ))}
                         </motion.div>
-
-                        {filteredAlumni.length > displayCount && (
-                          <div className="flex justify-center pb-8">
-                            <Button
-                              onClick={() => setDisplayCount(prev => prev + 12)}
-                              className="bg-white border-2 border-blue-600 text-blue-600 hover:bg-blue-50 hover:text-blue-700 px-8 py-6 rounded-xl text-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-300 group"
-                            >
-                              <span>View More Alumni</span>
-                              <div className="ml-2 p-1 bg-blue-100 rounded-full group-hover:bg-blue-200 transition-colors">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-chevron-down"><path d="m6 9 6 6 6-6" /></svg>
-                              </div>
-                            </Button>
-                          </div>
-                        )}
-
-                        <div className="text-center text-sm text-gray-400 pb-4">
-                          Showing {Math.min(displayCount, filteredAlumni.length)} of {filteredAlumni.length} profiles
-                        </div>
                       </>
                     )}
                   </AnimatePresence>
                 </TabsContent>
 
-                {/* Table View */}
-                <TabsContent value="table" className="mt-0 outline-none">
-                  {filteredAlumni.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center py-20 bg-white rounded-3xl border border-dashed border-gray-300">
-                      <div className="p-6 bg-blue-50 rounded-full mb-6">
-                        <Users className="h-12 w-12 text-blue-500" />
-                      </div>
-                      <h3 className="text-xl font-bold text-gray-900 mb-2">No profiles found</h3>
-                      <Button onClick={clearFilters} variant="outline">Reset Filters</Button>
-                    </div>
-                  ) : (
-                    <div className="overflow-hidden rounded-xl border bg-white shadow-sm">
-                      <Table>
-                        <TableHeader className="bg-gray-50/50">
-                          <TableRow>
-                            <TableHead className="py-5 font-bold text-gray-700">Photo</TableHead>
-                            <TableHead className="py-5 font-bold text-gray-700">Name</TableHead>
-                            <TableHead className="py-5 font-bold text-gray-700">School Details</TableHead>
-                            <TableHead className="py-5 font-bold text-gray-700">Batch</TableHead>
-                            <TableHead className="py-5 font-bold text-gray-700">Professional Info</TableHead>
-                            <TableHead className="py-5 font-bold text-gray-700">Location</TableHead>
-                            <TableHead className="py-5 font-bold text-gray-700 text-center">Action</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {filteredAlumni.map((alumni) => (
-                            <AlumniTableRow
-                              key={alumni.id}
-                              alumni={{ id: alumni.id, ...alumni.data }}
-                              onClick={() => handleViewDetails(alumni)}
-                            />
-                          ))}
-                        </TableBody>
-                      </Table>
-                    </div>
-                  )}
+                <TabsContent value="table" className="mt-0 focus-visible:ring-0">
+                  <div className="overflow-hidden rounded-3xl border border-slate-100 bg-white shadow-sm ring-1 ring-slate-200/50">
+                    <Table>
+                      <TableHeader className="bg-slate-50">
+                        <TableRow className="hover:bg-transparent border-slate-100">
+                          <TableHead className="py-6 pl-8 font-black text-slate-400 uppercase text-[11px] tracking-widest">Profile</TableHead>
+                          <TableHead className="py-6 font-black text-slate-400 uppercase text-[11px] tracking-widest">Name</TableHead>
+                          <TableHead className="py-6 font-black text-slate-400 uppercase text-[11px] tracking-widest">Educational Hub</TableHead>
+                          <TableHead className="py-6 font-black text-slate-400 uppercase text-[11px] tracking-widest text-center">Batch</TableHead>
+                          <TableHead className="py-6 font-black text-slate-400 uppercase text-[11px] tracking-widest">Expertise</TableHead>
+                          <TableHead className="py-6 font-black text-slate-400 uppercase text-[11px] tracking-widest">Location</TableHead>
+                          <TableHead className="py-6 pr-8 font-black text-slate-400 uppercase text-[11px] tracking-widest text-right">Action</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {filteredAlumni.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE).map((alumni) => (
+                          <AlumniTableRow
+                            key={alumni.id}
+                            alumni={{ id: alumni.id, ...alumni.data }}
+                            onClick={() => handleViewDetails(alumni)}
+                          />
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
                 </TabsContent>
+
+                {/* Unified Pagination Display */}
+                {filteredAlumni.length > 0 && (
+                  <div className="mt-12 pt-8 border-t border-slate-100 flex flex-col md:flex-row items-center justify-between gap-6">
+                    <div className="text-slate-400 font-bold text-xs uppercase tracking-widest flex items-center gap-3">
+                      <div className="flex items-center -space-x-2">
+                        {[...Array(Math.min(3, Math.ceil(filteredAlumni.length / ITEMS_PER_PAGE)))].map((_, i) => (
+                          <div key={i} className={`h-2 w-2 rounded-full ${currentPage === i + 1 ? 'bg-indigo-600 scale-125' : 'bg-slate-200'}`} />
+                        ))}
+                      </div>
+                      Showing {Math.min(ITEMS_PER_PAGE, filteredAlumni.length - (currentPage - 1) * ITEMS_PER_PAGE)} of {filteredAlumni.length} entries
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                        disabled={currentPage === 1}
+                        className="h-12 w-12 rounded-xl border-slate-200 text-slate-600 disabled:opacity-30 disabled:cursor-not-allowed hover:bg-slate-50 transition-all"
+                      >
+                        <ChevronLeft className="h-5 w-5" />
+                      </Button>
+
+                      <div className="flex items-center gap-1 px-4 py-2 bg-slate-50 rounded-xl border border-slate-100">
+                        <span className="text-indigo-600 font-black text-sm">{currentPage}</span>
+                        <span className="text-slate-300 font-bold text-xs mx-1">/</span>
+                        <span className="text-slate-500 font-bold text-sm">{Math.ceil(filteredAlumni.length / ITEMS_PER_PAGE)}</span>
+                      </div>
+
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={() => setCurrentPage(prev => Math.min(Math.ceil(filteredAlumni.length / ITEMS_PER_PAGE), prev + 1))}
+                        disabled={currentPage === Math.ceil(filteredAlumni.length / ITEMS_PER_PAGE)}
+                        className="h-12 w-12 rounded-xl border-slate-200 text-slate-600 disabled:opacity-30 disabled:cursor-not-allowed hover:bg-slate-50 transition-all"
+                      >
+                        <ChevronRight className="h-5 w-5" />
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </Tabs>
             </CardContent>
           </Card>
         </motion.div>
       </div>
 
-      {/* Alumni Details Dialog */}
-      {/* Alumni Details Dialog */}
+      {/* Dialogs */}
       <AlumniDetailsDialog
         isOpen={isDialogOpen}
         onOpenChange={setIsDialogOpen}
-        alumni={selectedAlumni ? {
-          id: selectedAlumni.id,
-          ...(alumniList.find(a => a.id === selectedAlumni.id)?.data || selectedAlumni.data)
-        } : null}
+        alumni={selectedAlumni as any}
         onEdit={handleEditAlumni}
         onDelete={handleDeleteAlumni}
       />
+
       <EditAlumniDialog
         isOpen={isEditOpen}
         onOpenChange={setIsEditOpen}
-        alumni={selectedAlumni ? {
-          id: selectedAlumni.id,
-          ...(alumniList.find(a => a.id === selectedAlumni.id)?.data || selectedAlumni.data)
-        } : null}
+        alumni={selectedAlumni as any}
         onSave={handleUpdateAlumni}
       />
     </div>

@@ -4,10 +4,8 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
-import { Building2, GraduationCap, MapPin, ArrowRight } from 'lucide-react';
+import { Linkedin, Mail, Facebook, Instagram, Twitter, ExternalLink, Globe } from 'lucide-react';
 import { AlumniData } from '@/lib/types';
 
 interface AlumniGridCardProps {
@@ -17,75 +15,87 @@ interface AlumniGridCardProps {
 }
 
 const AlumniGridCard: React.FC<AlumniGridCardProps> = ({ alumni, index, onClick }) => {
+  // Diverse professional color palettes
+  const designTokens = [
+    { bg: 'from-indigo-50/50 to-white', badge: 'bg-indigo-600', text: 'text-indigo-600', shadow: 'hover:shadow-indigo-500/20' },
+    { bg: 'from-blue-50/50 to-white', badge: 'bg-blue-600', text: 'text-blue-600', shadow: 'hover:shadow-blue-500/20' },
+    { bg: 'from-emerald-50/50 to-white', badge: 'bg-emerald-600', text: 'text-emerald-600', shadow: 'hover:shadow-emerald-500/20' },
+    { bg: 'from-violet-50/50 to-white', badge: 'bg-violet-600', text: 'text-violet-600', shadow: 'hover:shadow-violet-500/20' },
+    { bg: 'from-rose-50/50 to-white', badge: 'bg-rose-600', text: 'text-rose-600', shadow: 'hover:shadow-rose-500/20' },
+  ];
+
+  const token = designTokens[index % designTokens.length];
+
+  const formatSocialLink = (link?: string, platform?: string) => {
+    if (!link) return '';
+    if (link.startsWith('http')) return link;
+
+    switch (platform) {
+      case 'facebook': return `https://facebook.com/${link}`;
+      case 'instagram': return `https://instagram.com/${link}`;
+      case 'twitter': return `https://x.com/${link}`;
+      case 'linkedin': return `https://linkedin.com/in/${link}`;
+      default: return `https://${link}`;
+    }
+  };
+
+  const socialLinks = [
+    { id: 'linkedin', label: 'LinkedIn', value: alumni.linkedinLink, icon: Linkedin, color: 'hover:bg-[#0077b5]', iconColor: 'text-[#0077b5]' },
+    { id: 'facebook', label: 'Facebook', value: alumni.facebookLink, icon: Facebook, color: 'hover:bg-[#1877F2]', iconColor: 'text-[#1877F2]' },
+    { id: 'instagram', label: 'Instagram', value: alumni.instagramLink, icon: Instagram, color: 'hover:bg-[#E4405F]', iconColor: 'text-[#E4405F]' },
+    { id: 'twitter', label: 'Twitter/X', value: alumni.twitterLink, icon: Twitter, color: 'hover:bg-slate-900', iconColor: 'text-slate-600' },
+    { id: 'email', label: 'Email', value: alumni.email, icon: Mail, color: 'hover:bg-indigo-600', iconColor: 'text-slate-400' },
+    { id: 'website', label: 'Website', value: alumni.socialMediaLink, icon: Globe, color: 'hover:bg-emerald-600', iconColor: 'text-emerald-500' },
+  ].filter(link => !!link.value);
+
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: index * 0.05, duration: 0.4 }}
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{
+        delay: index * 0.03,
+        duration: 0.4,
+        ease: [0.23, 1, 0.32, 1]
+      }}
       className="h-full"
     >
       <Card
-        className="group relative h-full flex flex-col bg-white border-0 shadow-sm hover:shadow-2xl transition-all duration-300 overflow-hidden cursor-pointer rounded-3xl"
+        className={`group relative h-full bg-white border border-slate-100 shadow-sm hover:shadow-2xl ${token.shadow} hover:translate-y-[-8px] transition-all duration-500 cursor-pointer rounded-[2rem] overflow-hidden flex flex-col`}
         onClick={() => onClick(alumni)}
       >
-        {/* Card Header / Banner */}
-        <div className="h-28 bg-gradient-to-r from-blue-600 to-indigo-700 relative overflow-hidden shrink-0">
-          <div className="absolute inset-0 bg-black/10 group-hover:bg-black/0 transition-colors duration-500" />
-          <div className="absolute -bottom-6 -right-6 w-32 h-32 bg-white/10 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-700" />
+        {/* Colorful gradient header strip */}
+        <div className={`h-20 w-full bg-gradient-to-br ${token.bg} relative shrink-0`}>
+          <div className="absolute top-3 right-5">
+            <span className={`px-3 py-1 ${token.badge} text-white rounded-lg text-[9px] font-black uppercase tracking-widest shadow-lg shadow-current/20`}>
+              {alumni.yearOfGraduation}
+            </span>
+          </div>
         </div>
 
-        <CardContent className="flex-1 flex flex-col pt-0 px-6 pb-6 relative z-10 w-full min-h-0">
-
-          {/* Avatar - overlapping the banner */}
-          <div className="-mt-12 mb-4 flex justify-between items-end w-full shrink-0">
-            <div className="relative">
-              <Avatar className="h-24 w-24 ring-4 ring-white shadow-xl bg-white">
-                <AvatarImage src={alumni.photoURL} alt={alumni.fullName} className="object-cover" />
-                <AvatarFallback className="bg-blue-100 text-blue-600 text-2xl font-bold">
-                  {alumni.fullName?.charAt(0)}
-                </AvatarFallback>
-              </Avatar>
-              <div className="absolute bottom-1 right-1 h-5 w-5 bg-green-500 border-[3px] border-white rounded-full shadow-sm" />
-            </div>
-            <Badge variant="secondary" className="mb-4 bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-100 shadow-sm px-3 py-1 text-xs font-semibold">
-              Batch {alumni.yearOfGraduation}
-            </Badge>
+        <CardContent className="px-6 pb-6 flex-1 flex flex-col items-center">
+          {/* Overlapping Avatar */}
+          <div className="relative -mt-10 mb-4">
+            <div className={`absolute inset-0 ${token.badge} rounded-2xl blur-xl opacity-0 group-hover:opacity-20 transition-opacity duration-700`} />
+            <Avatar className="h-20 w-20 ring-[5px] ring-white shadow-xl rounded-2xl transition-transform duration-500 group-hover:scale-105 group-hover:-rotate-3">
+              <AvatarImage src={alumni.photoURL} alt={alumni.fullName} className="object-cover" />
+              <AvatarFallback className="bg-slate-50 text-slate-300 text-2xl font-black">
+                {alumni.fullName?.charAt(0)}
+              </AvatarFallback>
+            </Avatar>
           </div>
 
-          {/* Profile Details */}
-          <div className="mb-6 shrink-0">
-            <h3 className="text-lg font-bold text-gray-900 group-hover:text-blue-600 transition-colors mb-1 truncate pr-2" title={alumni.fullName}>
+          {/* Identity */}
+          <div className="text-center space-y-1">
+            <h3 className="text-lg font-black text-slate-900 leading-tight tracking-tight px-1 group-hover:text-indigo-600 transition-colors line-clamp-1">
               {alumni.fullName}
             </h3>
-            <p className="text-blue-600 font-medium text-sm truncate pr-2 mb-0.5" title={alumni.currentJobTitle || 'Alumni Member'}>
-              {alumni.currentJobTitle || 'Alumni Member'}
-            </p>
-            <p className="text-gray-500 text-xs truncate" title={alumni.companyName}>
-              {alumni.companyName}
-            </p>
-          </div>
-
-          {/* Info Grid - Pushed to bottom but flexible */}
-          <div className="mt-auto space-y-2.5 w-full">
-            <div className="flex items-center text-sm text-gray-600 bg-gray-50 p-2.5 rounded-xl border border-gray-100 group-hover:border-blue-100 group-hover:bg-blue-50/30 transition-colors">
-              <GraduationCap className="h-4 w-4 mr-3 flex-shrink-0 text-indigo-500" />
-              <span className="truncate flex-1 text-xs font-medium" title={alumni.schoolAttended}>
-                {alumni.schoolAttended || 'YES INDIA School'}
-              </span>
-            </div>
-            <div className="flex items-center text-sm text-gray-600 bg-gray-50 p-2.5 rounded-xl border border-gray-100 group-hover:border-blue-100 group-hover:bg-blue-50/30 transition-colors">
-              <MapPin className="h-4 w-4 mr-3 flex-shrink-0 text-rose-500" />
-              <span className="truncate flex-1 text-xs font-medium" title={[alumni.place, alumni.state].filter(Boolean).join(', ')}>
-                {[alumni.place, alumni.state].filter(Boolean).join(', ') || 'Location not available'}
-              </span>
-            </div>
-          </div>
-
-          {/* View Profile Action - Visible on Hover for Desktop, always for touch? Make it subtle at bottom */}
-          <div className="mt-5 pt-4 border-t border-gray-100 flex items-center justify-between text-blue-600 font-semibold text-sm shrink-0">
-            <span className="group-hover:translate-x-1 transition-transform duration-300">View Full Profile</span>
-            <div className="h-8 w-8 rounded-full bg-blue-50 flex items-center justify-center group-hover:bg-blue-600 group-hover:text-white transition-all duration-300 shadow-sm">
-              <ArrowRight className="h-4 w-4" />
+            <div className="flex flex-col">
+              <p className="text-slate-500 font-bold text-[10px] uppercase tracking-wider line-clamp-1">
+                {alumni.currentJobTitle || 'Alumni Member'}
+              </p>
+              <p className="text-slate-400 font-medium text-[9px] uppercase line-clamp-1">
+                {alumni.companyName || 'Private Organization'}
+              </p>
             </div>
           </div>
 
