@@ -72,7 +72,7 @@ const nextConfig: NextConfig = {
   async headers() {
     const nonce = generateNonce();
 
-    // Store nonce for use in middleware/API routes
+    // Store nonce for use in proxy/API routes
     return [
       {
         source: "/(.*)",

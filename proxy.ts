@@ -9,7 +9,7 @@ async function generateNonce(): Promise<string> {
     .join("");
 }
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const nonce = await generateNonce();
 
   const requestHeaders = new Headers(request.headers);

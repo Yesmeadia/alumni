@@ -8,7 +8,7 @@ import {
   signOut,
   onAuthStateChanged,
   setPersistence,
-  browserLocalPersistence,
+  browserSessionPersistence,
 } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { useRouter } from 'next/navigation';
@@ -23,8 +23,8 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType>({
   user: null,
   loading: true,
-  login: async () => {},
-  logout: async () => {},
+  login: async () => { },
+  logout: async () => { },
 });
 
 export const useAuth = () => {
@@ -41,8 +41,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const router = useRouter();
 
   useEffect(() => {
-    // Set persistence
-    setPersistence(auth, browserLocalPersistence);
+    // Session persistence: Logout when browser/tab is closed
+    setPersistence(auth, browserSessionPersistence);
 
     // Listen for auth state changes
     const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -52,6 +52,34 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     return () => unsubscribe();
   }, []);
+
+  // Automatic logout after inactivity (30 minutes)
+  useEffect(() => {
+    if (!user) return;
+
+    let inactivityTimeout: NodeJS.Timeout;
+    const INACTIVITY_LIMIT = 30 * 60 * 1000; // 30 minutes
+
+    const resetTimer = () => {
+      clearTimeout(inactivityTimeout);
+      inactivityTimeout = setTimeout(() => {
+        console.log('User inactive, logging out...');
+        logout();
+      }, INACTIVITY_LIMIT);
+    };
+
+    // Events that reset the inactivity timer
+    const events = ['mousemove', 'keydown', 'click', 'scroll', 'touchstart'];
+    events.forEach(event => document.addEventListener(event, resetTimer));
+
+    // Initial timer start
+    resetTimer();
+
+    return () => {
+      clearTimeout(inactivityTimeout);
+      events.forEach(event => document.removeEventListener(event, resetTimer));
+    };
+  }, [user]);
 
   const login = async (email: string, password: string) => {
     try {
