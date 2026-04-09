@@ -23,7 +23,7 @@ export async function proxy(request: NextRequest) {
 
   const cspHeader = [
     "default-src 'self'",
-    `script-src 'self' 'nonce-${nonce}' https://www.gstatic.com https://*.firebaseio.com https://www.google.com/recaptcha/ https://www.gstatic.com/recaptcha/ https://apis.google.com https://cdn.jsdelivr.net`,
+    `script-src 'self' ${process.env.NODE_ENV === 'development' ? "'unsafe-eval'" : ""} 'nonce-${nonce}' https://www.gstatic.com https://*.firebaseio.com https://www.google.com/recaptcha/ https://www.gstatic.com/recaptcha/ https://apis.google.com https://cdn.jsdelivr.net`,
     "style-src 'self' 'unsafe-inline' https://www.gstatic.com/recaptcha/ https://fonts.googleapis.com",
     "img-src 'self' data: blob: https: https://firebasestorage.googleapis.com https://www.gstatic.com https://www.google.com/recaptcha/ https://www.gstatic.com/recaptcha/",
     "font-src 'self' https://fonts.gstatic.com data:",

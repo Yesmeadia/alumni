@@ -1,11 +1,16 @@
 // app/layout.tsx
 import type { Metadata } from 'next';
 import { headers } from 'next/headers';
-import { Inter } from 'next/font/google';
+import { Figtree } from 'next/font/google';
 import './globals.css';
 import { AuthProvider } from '@/context/AuthContext';
+import SmoothScrolling from '@/components/SmoothScrolling';
 
-const inter = Inter({ subsets: ['latin'] });
+const figtree = Figtree({ 
+  subsets: ['latin'],
+  weight: ['400', '500', '600', '700', '800', '900'],
+  variable: '--font-figtree',
+});
 
 export const metadata: Metadata = {
   title: 'YES INDIA Alumni Management',
@@ -22,15 +27,17 @@ export default async function RootLayout({
   const nonce = headersList.get('X-Nonce') || '';
 
   return (
-    <html lang="en">
+    <html lang="en" className={`${figtree.variable}`} data-scroll-behavior="smooth" suppressHydrationWarning>
       <head>
         {/* Inject nonce into meta tag for client-side access */}
         <meta property="csp-nonce" content={nonce} />
       </head>
-      <body className={inter.className}>
-        <AuthProvider>
-          {children}
-        </AuthProvider>
+      <body className="font-sans font-[400] antialiased">
+        <SmoothScrolling>
+          <AuthProvider>
+            {children}
+          </AuthProvider>
+        </SmoothScrolling>
       </body>
     </html>
   );

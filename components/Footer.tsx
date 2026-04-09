@@ -45,6 +45,7 @@ const Footer = () => {
                 src="/logo.png"
                 alt="YES INDIA Logo"
                 fill
+                sizes="56px"
                 className="object-contain"
               />
             </div>

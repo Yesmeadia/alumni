@@ -89,81 +89,89 @@ export default function AlumniDetailsPage() {
 
     return (
         <ProtectedRoute>
-            <div className="min-h-screen bg-[#F8FAFC]">
+            <div className="min-h-screen bg-[#020617] text-slate-200 selection:bg-indigo-500/30">
                 <DashboardHeader />
 
-                <main className="container mx-auto px-4 py-8 lg:py-12">
+                <main className="container mx-auto px-4 py-8 lg:py-16 max-w-7xl relative">
+                    {/* Ambient Background UI */}
+                    <div className="absolute top-0 right-1/4 w-[600px] h-[600px] bg-indigo-600/10 rounded-full blur-[120px] pointer-events-none -z-10" />
+                    <div className="absolute bottom-0 left-1/4 w-[500px] h-[500px] bg-emerald-600/10 rounded-full blur-[120px] pointer-events-none -z-10" />
+
                     {/* Main Action Bar */}
-                    <div className="mb-8 flex items-center justify-between">
-                        <Button variant="ghost" onClick={() => router.push('/dashboard')} className="rounded-xl h-12 gap-2 font-bold px-4">
-                            <ArrowLeft className="h-4 w-4" /> Dashboard
+                    <div className="mb-10 flex flex-col md:flex-row items-center justify-between gap-4 z-10 relative">
+                        <Button variant="ghost" onClick={() => router.push('/dashboard')} className="rounded-2xl h-12 gap-2 font-bold px-5 text-slate-400 hover:text-white hover:bg-white/5 transition-all">
+                            <ArrowLeft className="h-5 w-5" /> Dashboard
                         </Button>
-                        <div className="flex gap-3">
+                        <div className="flex flex-wrap gap-3">
                             <Link href={`/alumni/${id}/edit`}>
-                                <Button variant="outline" className="rounded-xl h-12 gap-2 font-black uppercase tracking-widest text-[10px] px-6 border-slate-200">
+                                <Button className="bg-slate-800/50 hover:bg-slate-800 text-white rounded-2xl h-12 gap-2 font-black uppercase tracking-widest text-[10px] px-6 border border-white/10 backdrop-blur-md transition-all shadow-lg hover:shadow-indigo-500/10">
                                     <Pencil className="h-4 w-4" /> Edit Record
                                 </Button>
                             </Link>
                             <Link href={`/alumni/${id}/id-card`}>
-                                <Button variant="outline" className="rounded-xl h-12 gap-2 font-black uppercase tracking-widest text-[10px] px-6 border-slate-200 hover:bg-slate-50">
-                                    <ShieldCheck className="h-4 w-4" /> Get Alumni ID Card
+                                <Button className="bg-slate-800/50 hover:bg-slate-800 text-white rounded-2xl h-12 gap-2 font-black uppercase tracking-widest text-[10px] px-6 border border-white/10 backdrop-blur-md transition-all shadow-lg hover:shadow-indigo-500/10">
+                                    <ShieldCheck className="h-4 w-4" /> Alumni ID Card
                                 </Button>
                             </Link>
                             <Link href={`/alumni/${id}/pdf`}>
-                                <Button className="bg-slate-900 hover:bg-slate-800 text-white rounded-xl h-12 gap-2 font-black uppercase tracking-widest text-[10px] px-6">
+                                <Button className="bg-indigo-600 hover:bg-indigo-500 text-white rounded-2xl h-12 gap-2 font-black uppercase tracking-widest text-[10px] px-6 shadow-xl shadow-indigo-600/20 transition-all border border-indigo-500/50">
                                     <Download className="h-4 w-4" /> Download Official Doc
                                 </Button>
                             </Link>
                         </div>
                     </div>
 
-                    <div className="bg-white rounded-[3rem] shadow-2xl shadow-slate-200/60 overflow-hidden border border-slate-100 flex flex-col min-h-[70vh]">
+                    <div className="bg-slate-900/40 rounded-[3rem] shadow-2xl overflow-hidden border border-white/5 flex flex-col min-h-[70vh] backdrop-blur-2xl relative">
 
-                        {/* Design elements from Dialog */}
-                        <div className="relative shrink-0">
-                            <div className="h-64 w-full bg-gradient-to-br from-[#0f172a] via-[#1e1b4b] to-[#0f172a] relative overflow-hidden">
+                        {/* Top Banner section */}
+                        <div className="relative shrink-0 border-b border-white/5">
+                            <div className="h-72 w-full bg-gradient-to-br from-[#0f172a] via-[#1e1b4b] to-[#020617] relative overflow-hidden">
                                 <div className="absolute inset-0 opacity-20 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')]" />
-                                <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
+                                <div className="absolute inset-0 bg-gradient-to-t from-[#020617] to-transparent" />
 
-                                {/* Batch Info */}
-                                <div className="absolute bottom-10 right-16 text-right opacity-80">
-                                    <p className="text-white/40 text-[10px] font-black uppercase tracking-[0.3em] mb-1">Administrative Registry</p>
-                                    <h4 className="text-white text-3xl font-black italic tracking-widest uppercase">
+                                {/* Batch Info positioned aesthetically */}
+                                <div className="absolute bottom-12 right-12 text-right opacity-90 hidden md:block">
+                                    <p className="text-white/40 text-[10px] font-black uppercase tracking-[0.4em] mb-1">Administrative Registry</p>
+                                    <h4 className="text-white/90 text-4xl font-black italic tracking-widest uppercase filter drop-shadow-lg">
                                         CLASS OF {alumni.yearOfGraduation}
                                     </h4>
                                 </div>
                             </div>
 
-                            <div className="px-16 -mt-32 pb-12 relative z-10">
-                                <div className="flex flex-col md:flex-row items-end gap-16">
-                                    <div className="relative shrink-0">
-                                        <div className="absolute inset-0 bg-indigo-500 rounded-[4rem] blur-3xl opacity-30" />
-                                        <Avatar className="h-64 w-64 ring-[20px] ring-white shadow-4xl bg-white rounded-[4rem] relative overflow-hidden transition-transform duration-700 hover:scale-105 border-4 border-slate-50">
-                                            <AvatarImage src={alumni.photoURL} className="object-cover" />
-                                            <AvatarFallback className="text-7xl font-black bg-slate-50 text-indigo-200">
-                                                {alumni.fullName?.charAt(0)}
-                                            </AvatarFallback>
-                                        </Avatar>
-                                        <div className="absolute -bottom-2 -right-2 h-16 w-16 bg-emerald-500 border-[12px] border-white rounded-[2rem] shadow-2xl flex items-center justify-center">
-                                            <div className="h-3 w-3 bg-white rounded-full animate-pulse" />
+                            <div className="px-8 md:px-16 -mt-32 pb-12 relative z-10">
+                                <div className="flex flex-col md:flex-row items-end gap-10 md:gap-16">
+                                    <div className="relative shrink-0 group">
+                                        <div className="absolute inset-0 bg-indigo-500 rounded-[3.5rem] blur-3xl opacity-40 group-hover:opacity-60 transition-opacity duration-700" />
+                                        <div className="relative rounded-[3.5rem] p-1.5 bg-gradient-to-b from-white/20 to-white/5 shadow-2xl backdrop-blur-sm">
+                                            <Avatar className="h-48 w-48 md:h-64 md:w-64 bg-slate-950 rounded-[3.1rem] overflow-hidden">
+                                                <AvatarImage src={alumni.photoURL} className="object-cover transition-transform duration-700 group-hover:scale-110" />
+                                                <AvatarFallback className="text-6xl md:text-8xl font-black bg-slate-900 text-indigo-400">
+                                                    {alumni.fullName?.charAt(0)}
+                                                </AvatarFallback>
+                                            </Avatar>
+                                        </div>
+                                        <div className="absolute -bottom-2 -right-2 h-14 w-14 bg-[#020617] border border-white/10 rounded-[2rem] flex items-center justify-center shadow-xl">
+                                            <div className="h-10 w-10 bg-emerald-500/20 rounded-xl flex items-center justify-center">
+                                                <div className="h-3 w-3 bg-emerald-400 rounded-full animate-pulse shadow-[0_0_15px_rgba(52,211,153,0.8)]" />
+                                            </div>
                                         </div>
                                     </div>
 
-                                    <div className="flex-1 pb-6">
-                                        <div className="space-y-4 mb-12 text-center md:text-left">
-                                            <h1 className="text-7xl font-black text-indigo-950 tracking-tighter leading-none">
+                                    <div className="flex-1 pb-6 w-full text-center md:text-left">
+                                        <div className="space-y-4 mb-10 w-full">
+                                            <h1 className="text-5xl md:text-7xl font-black text-white tracking-tighter leading-none filter drop-shadow-sm">
                                                 {alumni.fullName}
                                             </h1>
-                                            <div className="flex flex-wrap items-center gap-8 justify-center md:justify-start">
-                                                <div className="flex items-center gap-3">
-                                                    <div className="h-3 w-3 rounded-full bg-indigo-600" />
-                                                    <p className="text-lg font-black text-indigo-600 uppercase tracking-[0.2em]">
+                                            <div className="flex flex-col md:flex-row items-center gap-4 md:gap-8 justify-center md:justify-start">
+                                                <div className="flex items-center gap-3 bg-indigo-500/10 px-4 py-2 rounded-xl border border-indigo-500/20">
+                                                    <div className="h-2 w-2 rounded-full bg-indigo-400" />
+                                                    <p className="text-sm font-black text-indigo-300 uppercase tracking-[0.2em]">
                                                         {alumni.currentJobTitle || 'Alumni Member'}
                                                     </p>
                                                 </div>
-                                                <div className="flex items-center gap-3">
-                                                    <div className="h-3 w-3 rounded-full bg-slate-300" />
-                                                    <p className="text-lg font-black text-slate-400 uppercase tracking-[0.15em]">
+                                                <div className="flex items-center gap-3 bg-slate-800/50 px-4 py-2 rounded-xl border border-white/5">
+                                                    <div className="h-2 w-2 rounded-full bg-slate-400" />
+                                                    <p className="text-sm font-black text-slate-300 uppercase tracking-[0.15em]">
                                                         {alumni.companyName || 'Verified Professional'}
                                                     </p>
                                                 </div>
@@ -179,9 +187,9 @@ export default function AlumniDetailsPage() {
                                                     rel="noreferrer"
                                                     className="group/social"
                                                 >
-                                                    <Button className={`rounded-2xl h-14 bg-white border ${link.border} text-slate-600 ${link.hoverBg} hover:text-white px-8 shadow-sm transition-all duration-300 flex items-center gap-4`}>
-                                                        <link.icon className={`h-5 w-5 ${link.iconColor} group-hover/social:text-white transition-colors`} />
-                                                        <span className="text-xs font-black uppercase tracking-[0.15em]">{link.label}</span>
+                                                    <Button className={`rounded-xl h-12 bg-white/5 border border-white/10 text-slate-300 hover:bg-white/10 hover:text-white px-6 shadow-sm transition-all duration-300 flex items-center gap-3`}>
+                                                        <link.icon className={`h-4 w-4 ${link.iconColor} group-hover/social:text-white transition-colors`} />
+                                                        <span className="text-[11px] font-black uppercase tracking-[0.15em]">{link.label}</span>
                                                     </Button>
                                                 </a>
                                             ))}
@@ -192,41 +200,41 @@ export default function AlumniDetailsPage() {
                         </div>
 
                         {/* Content Body */}
-                        <div className="flex-1 bg-slate-50/50 px-16 py-12">
-                            <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
-                                {/* Same content sections as Dialog but scaled up */}
+                        <div className="flex-1 p-8 md:p-16">
+                            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 md:gap-12">
+                                
                                 {/* Column 1: Contact & Personal */}
                                 <div className="space-y-8">
                                     <section>
-                                        <h3 className="text-sm font-black text-slate-400 uppercase tracking-widest mb-6 flex items-center gap-3">
-                                            <Phone className="h-4 w-4" /> Identity & Contact
+                                        <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-6 flex items-center gap-3">
+                                            <Phone className="h-4 w-4 text-indigo-400" /> Identity & Contact
                                         </h3>
-                                        <div className="bg-white border border-slate-200/60 rounded-[2.5rem] overflow-hidden divide-y divide-slate-100 shadow-sm">
-                                            <div className="flex items-center gap-5 px-8 py-6">
-                                                <div className="h-12 w-12 rounded-2xl bg-blue-50 flex items-center justify-center shrink-0">
-                                                    <Phone className="h-5 w-5 text-blue-500" />
+                                        <div className="bg-slate-900/50 border border-white/5 rounded-[2rem] overflow-hidden shadow-sm backdrop-blur-md">
+                                            <div className="flex items-center gap-5 px-6 py-5 border-b border-white/5 hover:bg-white/[0.02] transition-colors">
+                                                <div className="h-12 w-12 rounded-2xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center shrink-0">
+                                                    <Phone className="h-5 w-5 text-blue-400" />
                                                 </div>
                                                 <div>
-                                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Mobile</p>
-                                                    <p className="text-lg font-black text-slate-900">{alumni.mobileNumber || 'N/A'}</p>
+                                                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Mobile</p>
+                                                    <p className="text-base font-black text-slate-200">{alumni.mobileNumber || 'N/A'}</p>
                                                 </div>
                                             </div>
-                                            <div className="flex items-center gap-5 px-8 py-6">
-                                                <div className="h-12 w-12 rounded-2xl bg-indigo-50 flex items-center justify-center shrink-0">
-                                                    <Mail className="h-5 w-5 text-indigo-500" />
+                                            <div className="flex items-center gap-5 px-6 py-5 border-b border-white/5 hover:bg-white/[0.02] transition-colors">
+                                                <div className="h-12 w-12 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center shrink-0">
+                                                    <Mail className="h-5 w-5 text-indigo-400" />
                                                 </div>
                                                 <div className="min-w-0">
-                                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Email</p>
-                                                    <p className="text-lg font-black text-slate-900 truncate" title={alumni.email}>{alumni.email || 'N/A'}</p>
+                                                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Email</p>
+                                                    <p className="text-base font-black text-slate-200 truncate" title={alumni.email}>{alumni.email || 'N/A'}</p>
                                                 </div>
                                             </div>
-                                            <div className="flex items-center gap-5 px-8 py-6">
-                                                <div className="h-12 w-12 rounded-2xl bg-rose-50 flex items-center justify-center shrink-0">
-                                                    <MapPin className="h-5 w-5 text-rose-500" />
+                                            <div className="flex items-center gap-5 px-6 py-5 hover:bg-white/[0.02] transition-colors">
+                                                <div className="h-12 w-12 rounded-2xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center shrink-0">
+                                                    <MapPin className="h-5 w-5 text-rose-400" />
                                                 </div>
                                                 <div>
-                                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Location</p>
-                                                    <p className="text-lg font-black text-slate-900 leading-snug">
+                                                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Location</p>
+                                                    <p className="text-base font-black text-slate-200 leading-snug">
                                                         {[alumni.place, alumni.district, alumni.state].filter(Boolean).join(', ') || 'N/A'}
                                                     </p>
                                                 </div>
@@ -236,10 +244,12 @@ export default function AlumniDetailsPage() {
 
                                     {alumni.messageToTeacher && (
                                         <section>
-                                            <h3 className="text-sm font-black text-slate-400 uppercase tracking-widest mb-6">Reflection</h3>
-                                            <div className="bg-indigo-600 rounded-[2.5rem] p-10 text-white shadow-2xl shadow-indigo-200 relative overflow-hidden">
-                                                <MessageSquare className="absolute -bottom-4 -right-4 h-32 w-32 text-white/10" />
-                                                <p className="text-lg italic font-medium leading-relaxed relative z-10">
+                                            <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-6 flex items-center gap-3">
+                                                <MessageSquare className="h-4 w-4 text-indigo-400" /> Reflection
+                                            </h3>
+                                            <div className="bg-gradient-to-br from-indigo-900/60 to-indigo-950/60 border border-indigo-500/20 rounded-[2rem] p-8 text-indigo-100 shadow-xl relative overflow-hidden backdrop-blur-md">
+                                                <MessageCircle className="absolute -bottom-6 -right-6 h-32 w-32 text-indigo-500/10" />
+                                                <p className="text-base italic font-medium leading-relaxed relative z-10">
                                                     "{alumni.messageToTeacher}"
                                                 </p>
                                             </div>
@@ -250,21 +260,21 @@ export default function AlumniDetailsPage() {
                                 {/* Column 2: Education & Professional */}
                                 <div className="space-y-8">
                                     <section>
-                                        <h3 className="text-sm font-black text-slate-400 uppercase tracking-widest mb-6 flex items-center gap-3">
-                                            <GraduationCap className="h-5 w-5" /> Professional DNA
+                                        <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-6 flex items-center gap-3">
+                                            <GraduationCap className="h-4 w-4 text-emerald-400" /> Professional DNA
                                         </h3>
-                                        <div className="bg-white border border-slate-200/60 rounded-[2.5rem] p-10 shadow-sm">
-                                            <div className="relative pl-8 border-l-4 border-indigo-100 space-y-12">
+                                        <div className="bg-slate-900/50 border border-white/5 rounded-[2rem] p-8 shadow-sm backdrop-blur-md">
+                                            <div className="relative pl-8 border-l-2 border-slate-700 space-y-10">
                                                 <div className="relative">
-                                                    <span className="absolute -left-[42px] top-1.5 h-6 w-6 rounded-full bg-indigo-600 border-[6px] border-white shadow-xl" />
-                                                    <p className="text-xl font-black text-slate-900">{alumni.schoolAttended || 'YES INDIA School'}</p>
-                                                    <p className="text-sm text-indigo-600 font-black mt-1 uppercase tracking-wider">Class of {alumni.yearOfGraduation}</p>
+                                                    <span className="absolute -left-[37px] top-1 h-4 w-4 rounded-full bg-emerald-500 border-[4px] border-[#0f172a] shadow-[0_0_10px_rgba(16,185,129,0.5)]" />
+                                                    <p className="text-lg font-black text-slate-200">{alumni.schoolAttended || 'YES INDIA School'}</p>
+                                                    <p className="text-xs text-emerald-400 font-bold mt-1.5 uppercase tracking-widest">Class of {alumni.yearOfGraduation}</p>
                                                 </div>
                                                 <div className="relative">
-                                                    <span className="absolute -left-[42px] top-1.5 h-6 w-6 rounded-full bg-slate-300 border-[6px] border-white shadow-xl" />
-                                                    <p className="text-xl font-black text-slate-900">{alumni.university || 'Higher Education'}</p>
+                                                    <span className="absolute -left-[37px] top-1 h-4 w-4 rounded-full bg-indigo-500 border-[4px] border-[#0f172a]" />
+                                                    <p className="text-lg font-black text-slate-200">{alumni.university || 'Higher Education'}</p>
                                                     {alumni.qualification && (
-                                                        <Badge className="mt-3 bg-slate-100 text-slate-600 border-0 text-[11px] font-black rounded-xl px-4 py-1.5">
+                                                        <Badge className="mt-3 bg-white/5 text-slate-300 border border-white/10 text-[10px] font-black rounded-lg px-3 py-1">
                                                             {alumni.qualification}
                                                         </Badge>
                                                     )}
@@ -274,23 +284,23 @@ export default function AlumniDetailsPage() {
                                     </section>
 
                                     <section>
-                                        <h3 className="text-sm font-black text-slate-400 uppercase tracking-widest mb-6">Mastery & Experience</h3>
-                                        <div className="bg-white border border-slate-200/60 rounded-[2.5rem] p-10 shadow-sm">
-                                            <div className="flex flex-wrap gap-3 mb-10">
+                                        <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-6">Mastery & Experience</h3>
+                                        <div className="bg-slate-900/50 border border-white/5 rounded-[2rem] p-8 shadow-sm backdrop-blur-md">
+                                            <div className="flex flex-wrap gap-2 mb-8">
                                                 {(alumni.areasOfExpertise || 'General').split(',').map((skill, i) => (
-                                                    <span key={i} className="px-5 py-2.5 bg-slate-900 text-white rounded-2xl text-[12px] font-black uppercase tracking-tight">
+                                                    <span key={i} className="px-4 py-2 bg-[#020617] border border-white/10 text-slate-300 rounded-xl text-[10px] font-black uppercase tracking-widest">
                                                         {skill.trim()}
                                                     </span>
                                                 ))}
                                             </div>
-                                            <div className="grid grid-cols-2 gap-8 pt-8 border-t border-slate-50">
+                                            <div className="grid grid-cols-2 gap-6 pt-6 border-t border-white/5">
                                                 <div>
-                                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Clinical Exp.</p>
-                                                    <p className="text-xl font-black text-slate-900">{alumni.yearsOfExperience ? `${alumni.yearsOfExperience}nd Generation` : 'Fresh Talent'}</p>
+                                                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Clinical Exp.</p>
+                                                    <p className="text-base font-black text-slate-200">{alumni.yearsOfExperience ? `${alumni.yearsOfExperience} yrs` : 'Fresh Talent'}</p>
                                                 </div>
                                                 <div>
-                                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Industrial Sector</p>
-                                                    <p className="text-xl font-black text-slate-900">{alumni.industry || 'Global Reach'}</p>
+                                                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Industrial Sector</p>
+                                                    <p className="text-base font-black text-slate-200">{alumni.industry || 'Global Reach'}</p>
                                                 </div>
                                             </div>
                                         </div>
@@ -300,18 +310,18 @@ export default function AlumniDetailsPage() {
                                 {/* Column 3: Registry Status */}
                                 <div className="space-y-8">
                                     <section>
-                                        <h3 className="text-sm font-black text-slate-400 uppercase tracking-widest mb-6 flex items-center gap-3">
-                                            <ShieldCheck className="h-5 w-5" /> Registry Verification
+                                        <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-6 flex items-center gap-3">
+                                            <ShieldCheck className="h-4 w-4 text-blue-400" /> Registry Verification
                                         </h3>
-                                        <div className="bg-white border border-slate-200/60 rounded-[2.5rem] overflow-hidden shadow-sm divide-y divide-slate-100">
-                                            <div className="flex justify-between items-center px-10 py-6">
-                                                <span className="text-[11px] font-black text-slate-400 uppercase tracking-widest">Enrolled On</span>
-                                                <span className="text-lg font-black text-slate-900">{formatDate(alumni.registrationDate)}</span>
+                                        <div className="bg-slate-900/50 border border-white/5 rounded-[2rem] overflow-hidden shadow-sm backdrop-blur-md">
+                                            <div className="flex justify-between items-center px-6 py-5 border-b border-white/5">
+                                                <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Enrolled On</span>
+                                                <span className="text-sm font-black text-slate-300">{formatDate(alumni.registrationDate)}</span>
                                             </div>
-                                            <div className="flex justify-between items-center px-10 py-6">
-                                                <span className="text-[11px] font-black text-slate-400 uppercase tracking-widest">Global Status</span>
-                                                <Badge className="bg-emerald-500 text-white border-0 rounded-2xl px-6 py-2 text-[11px] font-black flex gap-3 items-center italic tracking-widest shadow-xl shadow-emerald-100">
-                                                    VERIFIED ACTIVE <span className="h-2 w-2 bg-white rounded-full animate-pulse" />
+                                            <div className="flex justify-between items-center px-6 py-5">
+                                                <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Global Status</span>
+                                                <Badge className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-xl px-4 py-1.5 text-[10px] font-black flex gap-2 items-center italic tracking-widest">
+                                                    VERIFIED <span className="h-1.5 w-1.5 bg-emerald-400 rounded-full animate-pulse shadow-[0_0_10px_rgba(52,211,153,0.8)]" />
                                                 </Badge>
                                             </div>
                                         </div>
@@ -319,11 +329,11 @@ export default function AlumniDetailsPage() {
 
                                     {alumni.stayInvolved && alumni.stayInvolved.length > 0 && (
                                         <section>
-                                            <h3 className="text-sm font-black text-slate-400 uppercase tracking-widest mb-6">Community Commitment</h3>
-                                            <div className="bg-emerald-500 text-white rounded-[2.5rem] p-10 shadow-2xl shadow-emerald-100">
-                                                <div className="flex flex-wrap gap-4">
+                                            <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-6">Community Commitment</h3>
+                                            <div className="bg-gradient-to-br from-indigo-600/20 to-purple-600/20 border border-indigo-500/20 rounded-[2rem] p-8 backdrop-blur-md">
+                                                <div className="flex flex-wrap gap-3">
                                                     {alumni.stayInvolved.map((item, i) => (
-                                                        <span key={i} className="px-5 py-2.5 bg-white/20 border border-white/30 rounded-2xl text-[11px] font-black uppercase tracking-widest">
+                                                        <span key={i} className="px-4 py-2 bg-[#020617]/50 border border-white/10 text-indigo-200 rounded-xl text-[10px] font-black uppercase tracking-widest backdrop-blur-sm">
                                                             {item}
                                                         </span>
                                                     ))}
@@ -336,13 +346,13 @@ export default function AlumniDetailsPage() {
                         </div>
 
                         {/* Global Footer */}
-                        <div className="px-16 py-8 bg-white border-t border-slate-100 flex justify-between items-center">
-                            <p className="text-[11px] font-black text-slate-400 uppercase tracking-[0.4em]">
-                                YES INDIA ALUMNI MANAGEMENT SYSTEM &copy; 2026
+                        <div className="px-8 md:px-16 py-6 bg-slate-950/80 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-4 backdrop-blur-xl">
+                            <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em] text-center md:text-left">
+                                YES INDIA ALUMNI MANAGEMENT SYSTEM &copy; {new Date().getFullYear()}
                             </p>
                             <div className="flex items-center gap-3">
-                                <div className="h-2 w-2 rounded-full bg-emerald-500" />
-                                <span className="text-[11px] font-black text-slate-400 uppercase tracking-widest">Encrypted Document Link</span>
+                                <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(52,211,153,0.8)]" />
+                                <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Encrypted Data Link</span>
                             </div>
                         </div>
 

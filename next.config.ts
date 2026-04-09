@@ -18,8 +18,8 @@ const createCSP = (nonce: string) => {
     "font-src 'self' https://fonts.gstatic.com data:",
     // Firebase Realtime DB, Auth, Storage + reCAPTCHA + Analytics
     "connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://securetoken.googleapis.com https://identitytoolkit.googleapis.com https://firebasestorage.googleapis.com https://www.google.com/recaptcha/ https://www.gstatic.com/recaptcha/ https://api.ipify.org wss://*.firebaseio.com https://www.googletagmanager.com https://www.google-analytics.com https://region1.analytics.google.com https://region1.google-analytics.com",
-    // reCAPTCHA iframe
-    "frame-src https://www.google.com/recaptcha/ https://recaptcha.google.com/",
+    // Firebase RTDB and reCAPTCHA iframe
+    "frame-src https://www.google.com/recaptcha/ https://recaptcha.google.com/ https://*.firebaseio.com",
     // Workers and blobs
     "worker-src 'self' blob:",
     "child-src blob:",
