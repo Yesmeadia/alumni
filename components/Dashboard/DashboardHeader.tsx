@@ -3,17 +3,7 @@
 
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import {
-  Bell,
-  Settings,
-  User as UserIcon,
-  LogOut,
-  ChevronDown,
-  Search,
-  ExternalLink,
-  LayoutDashboard,
-  Users
-} from 'lucide-react';
+import { Icon } from '@/components/ui/icon';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAuth } from '@/context/AuthContext';
 import { usePathname } from 'next/navigation';
@@ -53,7 +43,7 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({
 
         {/* Middle: Integrated Search */}
         <div className="hidden md:flex flex-1 max-w-xl relative">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+          <Icon name="search" className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
           <input
             type="text"
             placeholder="Search alumni, companies..."
@@ -67,10 +57,10 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({
         <div className="flex items-center gap-4">
           <div className="hidden sm:flex items-center gap-1">
             <Button variant="ghost" size="icon" className="h-9 w-9 text-slate-500 hover:bg-slate-50">
-              <Bell className="h-5 w-5" />
+              <Icon name="notifications" className="h-5 w-5 text-[20px]" />
             </Button>
             <Button variant="ghost" size="icon" className="h-9 w-9 text-slate-500 hover:bg-slate-50">
-              <Settings className="h-5 w-5" />
+              <Icon name="settings" className="h-5 w-5" />
             </Button>
           </div>
 
@@ -93,7 +83,7 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({
                   {user?.displayName || 'Administrator'}
                 </p>
               </div>
-              <ChevronDown className={`h-4 w-4 text-slate-400 transition-transform ${isProfileOpen ? 'rotate-180' : ''}`} />
+              <Icon name="keyboard_arrow_down" className={`h-4 w-4 text-slate-400 transition-transform ${isProfileOpen ? 'rotate-180' : ''}`} />
             </button>
 
             <AnimatePresence>
@@ -115,21 +105,21 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({
                       onClick={() => setIsProfileOpen(false)}
                       className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-50 hover:text-slate-900"
                     >
-                      <LayoutDashboard className="h-4 w-4" /> Dashboard
+                      <Icon name="dashboard" className="h-4 w-4" /> Dashboard
                     </Link>
                     <Link
                       href="/dashboard/registry"
                       onClick={() => setIsProfileOpen(false)}
                       className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-50 hover:text-slate-900"
                     >
-                      <Users className="h-4 w-4" /> Registry
+                      <Icon name="groups" className="h-4 w-4" /> Registry
                     </Link>
                     <div className="h-[1px] bg-slate-100 my-1.5" />
                     <button
                       onClick={handleLogout}
                       className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-rose-600 hover:bg-rose-50"
                     >
-                      <LogOut className="h-4 w-4" /> Sign Out
+                      <Icon name="logout" className="h-4 w-4" /> Sign Out
                     </button>
                   </div>
                 </motion.div>

@@ -1,4 +1,4 @@
-import Footer from '@/components/Footer';
+import PublicLayout from '@/components/layout/PublicLayout';
 import RegistrationForm from '@/components/registration/MultiStepRegistration';
 
 export const metadata = {
@@ -8,9 +8,8 @@ export const metadata = {
 
 export default function RegisterPage() {
   return (
-    <>
-    <RegistrationForm />;
-    <Footer />
-    </>
+    <PublicLayout>
+      <RegistrationForm />
+    </PublicLayout>
   );
-};
+}

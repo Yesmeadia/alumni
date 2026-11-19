@@ -1,5 +1,6 @@
 import React from 'react';
-import { Download, Printer, CheckCircle, Facebook, Instagram, Twitter, Linkedin, User, MapPin, GraduationCap, Briefcase, Users, MessageSquare } from 'lucide-react';
+import { Icon } from '@/components/ui/icon';
+import { escapeHtml } from '@/lib/security';
 
 interface PreviewPDFProps {
   formData: any;
@@ -17,7 +18,7 @@ const PreviewPDF: React.FC<PreviewPDFProps> = ({ formData, imagePreview }) => {
         <!DOCTYPE html>
         <html>
           <head>
-            <title>${formData.fullName || 'Alumni'} - Registration</title>
+            <title>${escapeHtml(formData.fullName || 'Alumni')} - Registration</title>
             <style>
               * { margin: 0; padding: 0; box-sizing: border-box; }
               body { 
@@ -176,14 +177,14 @@ const PreviewPDF: React.FC<PreviewPDFProps> = ({ formData, imagePreview }) => {
             onClick={generatePDF} 
             className="bg-blue-600 hover:bg-blue-700 text-white rounded-lg px-6 py-2.5 font-semibold flex items-center justify-center shadow-lg transition-colors"
           >
-            <Download className="mr-2 h-4 w-4" />
+            <Icon name="download" className="mr-2 h-4 w-4" />
             Download PDF
           </button>
           <button 
             onClick={printPreview} 
             className="border-2 border-gray-300 rounded-lg px-6 py-2.5 font-semibold hover:bg-gray-50 flex items-center justify-center transition-colors"
           >
-            <Printer className="mr-2 h-4 w-4" />
+            <Icon name="print" className="mr-2 h-4 w-4" />
             Print
           </button>
         </div>
@@ -192,7 +193,7 @@ const PreviewPDF: React.FC<PreviewPDFProps> = ({ formData, imagePreview }) => {
       {/* Warning Alert */}
       <div className="bg-amber-50 border-l-4 border-amber-500 p-5 rounded-lg print:hidden">
         <p className="text-amber-800 font-semibold flex items-center gap-2">
-          <CheckCircle className="w-5 h-5 flex-shrink-0" />
+          <Icon name="check_circle" className="w-5 h-5 flex-shrink-0" />
           Important: Once submitted, you cannot edit your registration. Please review carefully.
         </p>
       </div>
@@ -223,7 +224,7 @@ const PreviewPDF: React.FC<PreviewPDFProps> = ({ formData, imagePreview }) => {
             {/* Personal Info */}
             <div>
               <div className="flex items-center gap-2 mb-3">
-                <User className="w-5 h-5 text-blue-600" />
+                <Icon name="person" className="w-5 h-5 text-blue-600" />
                 <h3 className="text-xl font-bold text-gray-800">Personal Information</h3>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pl-7">
@@ -246,25 +247,25 @@ const PreviewPDF: React.FC<PreviewPDFProps> = ({ formData, imagePreview }) => {
                 <div className="mt-4 pl-7 flex flex-wrap items-center gap-x-4 gap-y-2">
                   {formData.facebookLink && (
                     <div className="flex items-center gap-1.5">
-                      <Facebook className="w-4 h-4 text-blue-600 flex-shrink-0" />
+                      <Icon name="public" className="w-4 h-4 text-blue-600 flex-shrink-0" />
                       <span className="text-sm text-gray-700">{formData.facebookLink}</span>
                     </div>
                   )}
                   {formData.instagramLink && (
                     <div className="flex items-center gap-1.5">
-                      <Instagram className="w-4 h-4 text-pink-600 flex-shrink-0" />
+                      <Icon name="photo_camera" className="w-4 h-4 text-pink-600 flex-shrink-0" />
                       <span className="text-sm text-gray-700">{formData.instagramLink}</span>
                     </div>
                   )}
                   {formData.twitterLink && (
                     <div className="flex items-center gap-1.5">
-                      <Twitter className="w-4 h-4 text-blue-400 flex-shrink-0" />
+                      <Icon name="alternate_email" className="w-4 h-4 text-blue-400 flex-shrink-0" />
                       <span className="text-sm text-gray-700">{formData.twitterLink}</span>
                     </div>
                   )}
                   {formData.linkedinLink && (
                     <div className="flex items-center gap-1.5">
-                      <Linkedin className="w-4 h-4 text-blue-700 flex-shrink-0" />
+                      <Icon name="work" className="w-4 h-4 text-blue-700 flex-shrink-0" />
                       <span className="text-sm text-gray-700">{formData.linkedinLink}</span>
                     </div>
                   )}
@@ -275,7 +276,7 @@ const PreviewPDF: React.FC<PreviewPDFProps> = ({ formData, imagePreview }) => {
             {/* Address */}
             <div>
               <div className="flex items-center gap-2 mb-3">
-                <MapPin className="w-5 h-5 text-green-600" />
+                <Icon name="location_on" className="w-5 h-5 text-green-600" />
                 <h3 className="text-xl font-bold text-gray-800">Address Details</h3>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pl-7">
@@ -301,7 +302,7 @@ const PreviewPDF: React.FC<PreviewPDFProps> = ({ formData, imagePreview }) => {
             {/* Education */}
             <div>
               <div className="flex items-center gap-2 mb-3">
-                <GraduationCap className="w-5 h-5 text-orange-600" />
+                <Icon name="school" className="w-5 h-5 text-orange-600" />
                 <h3 className="text-xl font-bold text-gray-800">Educational Background</h3>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pl-7">
@@ -335,7 +336,7 @@ const PreviewPDF: React.FC<PreviewPDFProps> = ({ formData, imagePreview }) => {
             {/* Professional */}
             <div>
               <div className="flex items-center gap-2 mb-3">
-                <Briefcase className="w-5 h-5 text-indigo-600" />
+                <Icon name="work" className="w-5 h-5 text-indigo-600" />
                 <h3 className="text-xl font-bold text-gray-800">Professional Details</h3>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pl-7">
@@ -354,7 +355,7 @@ const PreviewPDF: React.FC<PreviewPDFProps> = ({ formData, imagePreview }) => {
             {formData.stayInvolved && formData.stayInvolved.length > 0 && (
               <div>
                 <div className="flex items-center gap-2 mb-3">
-                  <Users className="w-5 h-5 text-teal-600" />
+                  <Icon name="groups" className="w-5 h-5 text-teal-600" />
                   <h3 className="text-xl font-bold text-gray-800">Ways to Stay Involved</h3>
                 </div>
                 <ul className="pl-7 space-y-1">
@@ -372,7 +373,7 @@ const PreviewPDF: React.FC<PreviewPDFProps> = ({ formData, imagePreview }) => {
             {formData.messageToTeacher && (
               <div>
                 <div className="flex items-center gap-2 mb-3">
-                  <MessageSquare className="w-5 h-5 text-purple-600" />
+                  <Icon name="chat" className="w-5 h-5 text-purple-600" />
                   <h3 className="text-xl font-bold text-gray-800">Message to Teacher</h3>
                 </div>
                 <p className="text-gray-700 italic pl-7 border-l-4 border-purple-300 py-2">&quot;{formData.messageToTeacher}&quot;</p>
@@ -390,7 +391,7 @@ const PreviewPDF: React.FC<PreviewPDFProps> = ({ formData, imagePreview }) => {
             })}
           </p>
           <div className="flex items-center gap-2 text-green-600">
-            <CheckCircle className="w-5 h-5" />
+            <Icon name="check_circle" className="w-5 h-5" />
             <span className="font-semibold">Ready to Submit</span>
           </div>
         </div>
@@ -437,16 +438,16 @@ const PreviewPDF: React.FC<PreviewPDFProps> = ({ formData, imagePreview }) => {
                     <div className="field-label">Social Media:</div>
                     <div className="field-value" style={{display: 'flex', flexWrap: 'wrap', gap: '15px', fontSize: '11px'}}>
                       {formData.facebookLink && (
-                        <span><Facebook/>{formData.facebookLink}</span>
+                        <span><Icon name="public" />{formData.facebookLink}</span>
                       )}
                       {formData.instagramLink && (
-                        <span> <Instagram/>{formData.instagramLink}</span>
+                        <span> <Icon name="photo_camera" />{formData.instagramLink}</span>
                       )}
                       {formData.twitterLink && (
-                        <span><Twitter/>{formData.twitterLink}</span>
+                        <span><Icon name="alternate_email" />{formData.twitterLink}</span>
                       )}
                       {formData.linkedinLink && (
-                        <span><Linkedin/>{formData.linkedinLink}</span>
+                        <span><Icon name="work" />{formData.linkedinLink}</span>
                       )}
                     </div>
                   </div>

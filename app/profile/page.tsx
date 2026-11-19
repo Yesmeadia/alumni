@@ -1,187 +1,270 @@
-// app/profile/page.tsx
 'use client';
 
 import React from 'react';
-import ProtectedRoute from '@/components/ProtectedRoute';
-import Footer from '@/components/Footer';
-import DashboardHeader from '@/components/Dashboard/DashboardHeader';
-import { motion } from 'framer-motion';
+import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { User, Mail, Shield, ShieldCheck, MapPin, Calendar, Clock, Edit2, LogOut, Settings as SettingsIcon } from 'lucide-react';
+import { Icon } from '@/components/ui/icon';
 import { useAuth } from '@/context/AuthContext';
+import { SITE_CONFIG } from '@/data/site';
 
 export default function ProfilePage() {
-    const { user, logout } = useAuth();
-    const displayName = user?.displayName || (user?.email ? user.email.split('@')[0] : 'Admin User');
+  const { user, logout } = useAuth();
+  const displayName =
+    user?.displayName || (user?.email ? user.email.split('@')[0] : 'Admin User');
 
-    return (
-        <ProtectedRoute>
-            <div className="min-h-screen bg-[#F8FAFC]">
-                <DashboardHeader />
+  const lastSignIn = user?.metadata?.lastSignInTime
+    ? new Date(user.metadata.lastSignInTime).toLocaleString('en-IN', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    })
+    : 'Active Session';
 
-                <main className="container mx-auto px-4 py-12 max-w-5xl">
-                    <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.5 }}
-                    >
-                        {/* Profile Overview Card */}
-                        <Card className="border-0 shadow-2xl shadow-slate-200/50 rounded-[2.5rem] overflow-hidden bg-white mb-8">
-                            <div className="h-40 bg-gradient-to-r from-indigo-600 to-blue-700 relative">
-                                <div className="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]" />
-                            </div>
+  const accountCreated = user?.metadata?.creationTime
+    ? new Date(user.metadata.creationTime).toLocaleDateString('en-IN', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+    })
+    : '—';
 
-                            <CardContent className="px-10 pb-10">
-                                <div className="relative flex flex-col md:flex-row items-end gap-8 -mt-16">
-                                    <div className="relative">
-                                        <Avatar className="h-40 w-40 ring-[12px] ring-white shadow-2xl rounded-[2.5rem] bg-white">
-                                            <AvatarImage src={user?.photoURL || ''} />
-                                            <AvatarFallback className="text-5xl font-black bg-slate-50 text-indigo-200 uppercase">
-                                                {displayName.charAt(0)}
-                                            </AvatarFallback>
-                                        </Avatar>
-                                        <div className="absolute -bottom-2 -right-2 h-10 w-10 bg-emerald-500 border-8 border-white rounded-2xl shadow-xl flex items-center justify-center">
-                                            <div className="h-2 w-2 bg-white rounded-full animate-pulse" />
-                                        </div>
-                                    </div>
+  const saasCardClass =
+    'bg-white border border-[#E5E7EB] rounded-[18px] shadow-[0_4px_20px_-4px_rgba(29,30,32,0.05)] overflow-hidden';
 
-                                    <div className="flex-1 text-center md:text-left pb-4">
-                                        <div className="flex flex-wrap items-center gap-4 justify-center md:justify-start mb-2">
-                                            <h1 className="text-4xl font-black text-slate-900 tracking-tight leading-none">
-                                                {displayName}
-                                            </h1>
-                                            <div className="bg-emerald-50 text-emerald-600 px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border border-emerald-100 flex items-center gap-2">
-                                                <ShieldCheck className="h-3 w-3" /> System Administrator
-                                            </div>
-                                        </div>
-                                        <p className="text-slate-500 font-bold text-lg uppercase tracking-wide">
-                                            Yes India Alumni Network
-                                        </p>
-                                    </div>
+  return (
+    <div className="flex-1 p-4 sm:p-6 lg:p-8 max-w-[1200px] w-full mx-auto space-y-7">
+      {/* Page Header Strip */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-medium text-[#1D1E20] tracking-tight">
+            Account &amp; Profile
+          </h1>
+          <p className="text-sm text-[#5F6368] mt-1">
+            View your administrator profile, session details, and quick workspace controls.
+          </p>
+        </div>
 
-                                    <div className="flex gap-3 pb-4">
-                                        <Button className="rounded-2xl h-12 px-6 bg-slate-900 hover:bg-slate-800 text-white font-bold shadow-xl transition-all">
-                                            <Edit2 className="h-4 w-4 mr-2" /> Edit Profile
-                                        </Button>
-                                    </div>
-                                </div>
-                            </CardContent>
-                        </Card>
+        <div className="flex items-center gap-2.5">
+          <Link href="/dashboard">
+            <Button
+              variant="outline"
+              className="h-10 px-4 rounded-xl border-[#E5E7EB] bg-white text-[#1D1E20] hover:bg-[#F3F0FA] hover:text-[#2a1b63]"
+            >
+              <Icon name="grid_view" className="text-[18px] mr-2" />
+              Dashboard
+            </Button>
+          </Link>
+          <Button
+            type="button"
+            onClick={() => logout()}
+            variant="outline"
+            className="h-10 px-4 rounded-xl border-red-200 text-[#DC2626] hover:bg-red-50 hover:border-red-300"
+          >
+            <Icon name="logout" className="text-[18px] mr-2" />
+            Sign Out
+          </Button>
+        </div>
+      </div>
 
-                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                            {/* Left Column - Details */}
-                            <div className="lg:col-span-1 space-y-6">
-                                <Card className="border-0 shadow-sm rounded-3xl overflow-hidden ring-1 ring-slate-200/50 bg-white">
-                                    <CardHeader className="p-6 pb-2">
-                                        <CardTitle className="text-sm font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                                            <User className="h-4 w-4" /> Personal Information
-                                        </CardTitle>
-                                    </CardHeader>
-                                    <CardContent className="p-6 pt-2 space-y-5">
-                                        <div className="flex items-center gap-4">
-                                            <div className="h-10 w-10 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo-600 shrink-0">
-                                                <Mail className="h-5 w-5" />
-                                            </div>
-                                            <div className="min-w-0">
-                                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Email Address</p>
-                                                <p className="text-slate-900 font-black truncate">{user?.email || 'admin@yesindia.org'}</p>
-                                            </div>
-                                        </div>
+      {/* Profile Summary Card */}
+      <Card className={saasCardClass}>
+        <div className="h-28 sm:h-32 bg-[#2a1b63] relative">
+          <div className="absolute inset-x-0 bottom-0 h-1 bg-[#a5874c]" />
+        </div>
+        <CardContent className="px-6 sm:px-8 pb-7">
+          <div className="flex flex-col sm:flex-row sm:items-end gap-5 -mt-12 relative z-10">
+            <Avatar className="h-24 w-24 rounded-2xl ring-4 ring-white shadow-md bg-white shrink-0">
+              <AvatarImage src={user?.photoURL || ''} alt={displayName} />
+              <AvatarFallback className="rounded-2xl bg-[#F3F0FA] text-[#2a1b63] text-2xl font-semibold uppercase">
+                {displayName.charAt(0)}
+              </AvatarFallback>
+            </Avatar>
 
-                                        <div className="flex items-center gap-4">
-                                            <div className="h-10 w-10 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600 shrink-0">
-                                                <Shield className="h-5 w-5" />
-                                            </div>
-                                            <div>
-                                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Access Role</p>
-                                                <p className="text-slate-900 font-black">Super Admin</p>
-                                            </div>
-                                        </div>
-
-                                        <div className="flex items-center gap-4">
-                                            <div className="h-10 w-10 rounded-xl bg-rose-50 flex items-center justify-center text-rose-600 shrink-0">
-                                                <MapPin className="h-5 w-5" />
-                                            </div>
-                                            <div>
-                                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Organization Hub</p>
-                                                <p className="text-slate-900 font-black">Malappuram, Kerala</p>
-                                            </div>
-                                        </div>
-                                    </CardContent>
-                                </Card>
-
-                                <Card className="border-0 shadow-sm rounded-3xl overflow-hidden ring-1 ring-slate-200/50 bg-white">
-                                    <CardHeader className="p-6 pb-2">
-                                        <CardTitle className="text-sm font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                                            <Clock className="h-4 w-4" /> System Stats
-                                        </CardTitle>
-                                    </CardHeader>
-                                    <CardContent className="p-6 pt-2 space-y-5">
-                                        <div className="flex justify-between items-center text-sm">
-                                            <span className="text-slate-500 font-bold uppercase tracking-widest text-[10px]">Last Login</span>
-                                            <span className="text-slate-900 font-black">Today, 09:45 AM</span>
-                                        </div>
-                                        <div className="flex justify-between items-center text-sm">
-                                            <span className="text-slate-500 font-bold uppercase tracking-widest text-[10px]">Session Status</span>
-                                            <Badge className="bg-emerald-500/10 text-emerald-600 border-0 flex gap-1.5 items-center px-3 font-black text-[10px]">
-                                                ACTIVE
-                                            </Badge>
-                                        </div>
-                                    </CardContent>
-                                </Card>
-                            </div>
-
-                            {/* Right Column - Activity/Settings */}
-                            <div className="lg:col-span-2 space-y-6">
-                                <Card className="border-0 shadow-sm rounded-3xl overflow-hidden ring-1 ring-slate-200/50 bg-white h-full">
-                                    <CardHeader className="p-8 pb-4">
-                                        <CardTitle className="text-2xl font-black text-slate-900">Control Panel Settings</CardTitle>
-                                        <CardDescription className="text-slate-400 font-medium font-bold uppercase tracking-widest text-[11px]">
-                                            Manage your administrative preferences
-                                        </CardDescription>
-                                    </CardHeader>
-                                    <CardContent className="p-8 pt-4 space-y-4">
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                            <Button variant="outline" className="h-20 rounded-2xl border-slate-100 hover:bg-slate-50 hover:border-indigo-100 flex flex-col items-center justify-center p-4 transition-all group">
-                                                <SettingsIcon className="h-6 w-6 text-slate-400 mb-2 group-hover:text-indigo-600" />
-                                                <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">Security Settings</span>
-                                            </Button>
-                                            <Button variant="outline" className="h-20 rounded-2xl border-slate-100 hover:bg-slate-50 hover:border-indigo-100 flex flex-col items-center justify-center p-4 transition-all group">
-                                                <Calendar className="h-6 w-6 text-slate-400 mb-2 group-hover:text-emerald-600" />
-                                                <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">Activity Logs</span>
-                                            </Button>
-                                            <Button variant="outline" className="h-20 rounded-2xl border-slate-100 hover:bg-slate-50 hover:border-indigo-100 flex flex-col items-center justify-center p-4 transition-all group">
-                                                <Mail className="h-6 w-6 text-slate-400 mb-2 group-hover:text-blue-600" />
-                                                <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">Notification Hub</span>
-                                            </Button>
-                                            <Button
-                                                variant="outline"
-                                                onClick={() => logout()}
-                                                className="h-20 rounded-2xl border-slate-100 hover:bg-rose-50 hover:border-rose-100 flex flex-col items-center justify-center p-4 transition-all group"
-                                            >
-                                                <LogOut className="h-6 w-6 text-slate-400 mb-2 group-hover:text-rose-600" />
-                                                <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">Terminate Session</span>
-                                            </Button>
-                                        </div>
-                                    </CardContent>
-                                </Card>
-                            </div>
-                        </div>
-                    </motion.div>
-                </main>
-
-                <Footer />
+            <div className="flex-1 min-w-0 sm:pb-1">
+              <div className="flex flex-wrap items-center gap-2.5">
+                <h2 className="text-xl sm:text-2xl font-semibold text-[#1D1E20] capitalize truncate">
+                  {displayName}
+                </h2>
+                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-[#ECFDF5] text-[#16A34A] border border-[#A7F3D0]/70">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#16A34A]" />
+                  Active Admin
+                </span>
+              </div>
+              <p className="text-sm text-[#5F6368] mt-0.5 truncate">
+                {user?.email || SITE_CONFIG.email}
+              </p>
             </div>
-        </ProtectedRoute>
-    );
-}
+          </div>
+        </CardContent>
+      </Card>
 
-function Badge({ children, className }: { children: React.ReactNode, className?: string }) {
-    return (
-        <span className={`px-2 py-0.5 rounded-full ${className}`}>
-            {children}
-        </span>
-    );
+      {/* Details & Quick Controls Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        {/* Left: Account Information */}
+        <div className="lg:col-span-5 space-y-6">
+          <Card className={saasCardClass}>
+            <CardHeader className="px-6 py-5 border-b border-[#E5E7EB]">
+              <CardTitle className="text-base font-semibold text-[#1D1E20]">
+                Account Information
+              </CardTitle>
+              <CardDescription className="text-xs text-[#8A8F98]">
+                Authenticated administrator identity
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="p-6 space-y-4">
+              <div className="flex items-center gap-3.5">
+                <div className="h-10 w-10 rounded-xl bg-[#F3F0FA] text-[#2a1b63] border border-[#DDD6F3]/70 flex items-center justify-center shrink-0">
+                  <Icon name="mail" className="text-[20px]" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-[11px] font-medium uppercase tracking-wider text-[#8A8F98]">
+                    Email Address
+                  </p>
+                  <p className="text-sm font-medium text-[#1D1E20] truncate">
+                    {user?.email || SITE_CONFIG.email}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3.5">
+                <div className="h-10 w-10 rounded-xl bg-[#EFF6FF] text-[#2563EB] border border-[#BFDBFE]/70 flex items-center justify-center shrink-0">
+                  <Icon name="verified_user" className="text-[20px]" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-[11px] font-medium uppercase tracking-wider text-[#8A8F98]">
+                    Access Level
+                  </p>
+                  <p className="text-sm font-medium text-[#1D1E20]">Registry Administrator</p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3.5">
+                <div className="h-10 w-10 rounded-xl bg-[#FFFBEB] text-[#D97706] border border-[#FDE68A]/70 flex items-center justify-center shrink-0">
+                  <Icon name="location_on" className="text-[20px]" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-[11px] font-medium uppercase tracking-wider text-[#8A8F98]">
+                    Organization
+                  </p>
+                  <p className="text-sm font-medium text-[#1D1E20]">{SITE_CONFIG.fullName}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className={saasCardClass}>
+            <CardHeader className="px-6 py-5 border-b border-[#E5E7EB]">
+              <CardTitle className="text-base font-semibold text-[#1D1E20]">
+                Session &amp; Security
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-6 space-y-3.5 text-sm">
+              <div className="flex items-center justify-between py-1 border-b border-[#E5E7EB]/60">
+                <span className="text-[#5F6368]">Last Sign-In</span>
+                <span className="font-medium text-[#1D1E20]">{lastSignIn}</span>
+              </div>
+              <div className="flex items-center justify-between py-1 border-b border-[#E5E7EB]/60">
+                <span className="text-[#5F6368]">Account Created</span>
+                <span className="font-medium text-[#1D1E20]">{accountCreated}</span>
+              </div>
+              <div className="flex items-center justify-between py-1">
+                <span className="text-[#5F6368]">Session Timeout</span>
+                <span className="font-medium text-[#1D1E20]">30 min inactivity</span>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Right: Workspace Quick Actions */}
+        <div className="lg:col-span-7">
+          <Card className={`${saasCardClass} h-full`}>
+            <CardHeader className="px-6 py-5 border-b border-[#E5E7EB]">
+              <CardTitle className="text-base font-semibold text-[#1D1E20]">
+                Workspace Controls
+              </CardTitle>
+              <CardDescription className="text-xs text-[#8A8F98]">
+                Shortcuts to manage registrations, exports, and account security
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="p-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <Link
+                  href="/dashboard/registrations"
+                  className="group p-5 rounded-2xl border border-[#E5E7EB] bg-[#FAFBFF] hover:bg-[#F3F0FA] hover:border-[#DDD6F3] transition-all flex items-start gap-3.5"
+                >
+                  <div className="h-10 w-10 rounded-xl bg-white border border-[#E5E7EB] text-[#2a1b63] flex items-center justify-center shrink-0">
+                    <Icon name="group" className="text-[20px]" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-[#1D1E20] group-hover:text-[#2a1b63]">
+                      Alumni Registry
+                    </p>
+                    <p className="text-xs text-[#5F6368] mt-0.5">
+                      Search, edit, and manage alumni profiles
+                    </p>
+                  </div>
+                </Link>
+
+                <Link
+                  href="/dashboard/reports"
+                  className="group p-5 rounded-2xl border border-[#E5E7EB] bg-[#FAFBFF] hover:bg-[#F3F0FA] hover:border-[#DDD6F3] transition-all flex items-start gap-3.5"
+                >
+                  <div className="h-10 w-10 rounded-xl bg-white border border-[#E5E7EB] text-[#2a1b63] flex items-center justify-center shrink-0">
+                    <Icon name="description" className="text-[20px]" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-[#1D1E20] group-hover:text-[#2a1b63]">
+                      Export Excel / CSV
+                    </p>
+                    <p className="text-xs text-[#5F6368] mt-0.5">
+                      Download filtered alumni spreadsheets
+                    </p>
+                  </div>
+                </Link>
+
+                <Link
+                  href="/forgot-password"
+                  className="group p-5 rounded-2xl border border-[#E5E7EB] bg-[#FAFBFF] hover:bg-[#F3F0FA] hover:border-[#DDD6F3] transition-all flex items-start gap-3.5"
+                >
+                  <div className="h-10 w-10 rounded-xl bg-white border border-[#E5E7EB] text-[#2a1b63] flex items-center justify-center shrink-0">
+                    <Icon name="lock_reset" className="text-[20px]" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-[#1D1E20] group-hover:text-[#2a1b63]">
+                      Reset Password
+                    </p>
+                    <p className="text-xs text-[#5F6368] mt-0.5">
+                      Request a password reset email
+                    </p>
+                  </div>
+                </Link>
+
+                <button
+                  type="button"
+                  onClick={() => logout()}
+                  className="group p-5 rounded-2xl border border-[#E5E7EB] bg-[#FAFBFF] hover:bg-red-50 hover:border-red-200 transition-all flex items-start gap-3.5 text-left"
+                >
+                  <div className="h-10 w-10 rounded-xl bg-white border border-[#E5E7EB] text-[#DC2626] flex items-center justify-center shrink-0">
+                    <Icon name="logout" className="text-[20px]" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-[#1D1E20] group-hover:text-[#DC2626]">
+                      Sign Out
+                    </p>
+                    <p className="text-xs text-[#5F6368] mt-0.5">
+                      End your current administrator session
+                    </p>
+                  </div>
+                </button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    </div>
+  );
 }

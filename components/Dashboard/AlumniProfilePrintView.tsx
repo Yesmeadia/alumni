@@ -2,7 +2,7 @@
 'use client';
 
 import React from 'react';
-import { User, Briefcase, Heart } from 'lucide-react';
+import { Icon } from '@/components/ui/icon';
 import { AlumniData } from '@/lib/types';
 import PrintProfileHeader from './PrintProfileHeader';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -45,7 +45,7 @@ const AlumniProfilePrintView: React.FC<AlumniProfilePrintViewProps> = ({ alumni 
             {/* Column 1: Bio Info */}
             <section className="space-y-3">
                 <div className="flex items-center gap-2 text-[10px] font-bold text-slate-900 uppercase tracking-widest border-b-2 border-slate-900 pb-1.5">
-                    <User className="h-3.5 w-3.5" /> Personal Profile
+                    <Icon name="person" className="h-3.5 w-3.5" /> Personal Profile
                 </div>
                 <div className="space-y-3 pt-1">
                     <div>
@@ -66,7 +66,7 @@ const AlumniProfilePrintView: React.FC<AlumniProfilePrintViewProps> = ({ alumni 
             {/* Column 2: Career Info */}
             <section className="space-y-3">
                 <div className="flex items-center gap-2 text-[10px] font-bold text-slate-900 uppercase tracking-widest border-b-2 border-slate-900 pb-1.5">
-                    <Briefcase className="h-3.5 w-3.5" /> Professional Data
+                    <Icon name="work" className="h-3.5 w-3.5" /> Professional Data
                 </div>
                 <div className="space-y-3 pt-1">
                     <div>
@@ -90,7 +90,7 @@ const AlumniProfilePrintView: React.FC<AlumniProfilePrintViewProps> = ({ alumni 
         {/* 4. Reflection - Scaled for 1 Page */}
         <section className="space-y-4 pt-4">
             <div className="flex items-center gap-2 text-[10px] font-bold text-slate-900 uppercase tracking-widest border-b-2 border-slate-900 pb-1.5 w-full">
-                <Heart className="h-3.5 w-3.5 text-rose-500" /> Student Reflection
+                <Icon name="favorite" className="h-3.5 w-3.5 text-rose-500" /> Student Reflection
             </div>
             <div className="bg-slate-50 p-6 rounded-xl border border-slate-100 italic font-medium text-slate-600 leading-relaxed text-sm relative">
                 <div className="absolute top-2 left-4 text-slate-200 text-4xl font-serif">"</div>

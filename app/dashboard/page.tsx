@@ -1,8 +1,5 @@
-// app/dashboard/page.tsx
+import { Suspense } from 'react';
 import Dashboard from '@/components/Dashboard';
-import ProtectedRoute from '@/components/ProtectedRoute';
-import Footer from '@/components/Footer';
-
 
 export const metadata = {
   title: 'Alumni Dashboard - YES INDIA',
@@ -11,11 +8,8 @@ export const metadata = {
 
 export default function DashboardPage() {
   return (
-    <>
-    <ProtectedRoute>
+    <Suspense fallback={null}>
       <Dashboard />
-      <Footer />
-    </ProtectedRoute>
-    </>
+    </Suspense>
   );
 }

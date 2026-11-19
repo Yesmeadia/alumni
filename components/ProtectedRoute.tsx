@@ -1,4 +1,3 @@
-// components/ProtectedRoute.tsx
 'use client';
 
 import { useEffect } from 'react';
@@ -11,16 +10,16 @@ export default function ProtectedRoute({ children }: { children: React.ReactNode
 
   useEffect(() => {
     if (!loading && !user) {
-      router.push('/login');
+      router.replace('/login');
     }
   }, [user, loading, router]);
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="min-h-screen flex items-center justify-center bg-[#faf9f6]">
         <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
-          <p className="mt-4 text-gray-600">Loading...</p>
+          <div className="inline-block animate-spin rounded-full h-10 w-10 border-2 border-[#2a1b63]/20 border-t-[#2a1b63]" />
+          <p className="mt-3 text-sm font-medium text-gray-600">Verifying session...</p>
         </div>
       </div>
     );

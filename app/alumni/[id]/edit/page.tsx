@@ -6,9 +6,9 @@ import { useParams, useRouter } from 'next/navigation';
 import { ref, onValue, update } from 'firebase/database';
 import { database } from '@/lib/firebase';
 import { AlumniData } from '@/lib/types';
-import ProtectedRoute from '@/components/ProtectedRoute';
-import DashboardHeader from '@/components/Dashboard/DashboardHeader';
-import Footer from '@/components/Footer';
+
+
+
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -21,7 +21,7 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Loader2, User, GraduationCap, Briefcase, Share2, Save, ArrowLeft } from 'lucide-react';
+import { Icon } from '@/components/ui/icon';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export default function EditAlumniPage() {
@@ -81,15 +81,15 @@ export default function EditAlumniPage() {
     if (loading) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-slate-50">
-                <Loader2 className="h-10 w-10 animate-spin text-indigo-600" />
+                <Icon name="progress_activity" className="h-10 w-10 animate-spin text-indigo-600" />
             </div>
         );
     }
 
     return (
-        <ProtectedRoute>
+
             <div className="min-h-screen bg-[#F8FAFC]">
-                <DashboardHeader />
+
 
                 <main className="container mx-auto px-4 py-12 max-w-4xl">
                     <motion.div
@@ -103,7 +103,7 @@ export default function EditAlumniPage() {
                                     onClick={() => router.back()}
                                     className="rounded-xl h-12 w-12 p-0 hover:bg-white hover:shadow-md transition-all"
                                 >
-                                    <ArrowLeft className="h-6 w-6" />
+                                    <Icon name="arrow_back" className="h-6 w-6" />
                                 </Button>
                                 <div>
                                     <h1 className="text-3xl font-black text-slate-900 leading-none">Edit Alumni</h1>
@@ -119,16 +119,16 @@ export default function EditAlumniPage() {
                                 <div className="px-10 pt-8 bg-slate-50/50 border-b border-slate-100">
                                     <TabsList className="bg-slate-200/50 p-1.5 rounded-2xl w-full grid grid-cols-4 h-14 mb-8">
                                         <TabsTrigger value="personal" className="rounded-xl data-[state=active]:bg-white data-[state=active]:text-indigo-600 data-[state=active]:shadow-sm font-black text-[10px] uppercase tracking-widest flex items-center gap-2">
-                                            <User className="h-4 w-4" /> Personal
+                                            <Icon name="person" className="h-4 w-4" /> Personal
                                         </TabsTrigger>
                                         <TabsTrigger value="education" className="rounded-xl data-[state=active]:bg-white data-[state=active]:text-indigo-600 data-[state=active]:shadow-sm font-black text-[10px] uppercase tracking-widest flex items-center gap-2">
-                                            <GraduationCap className="h-4 w-4" /> Education
+                                            <Icon name="school" className="h-4 w-4" /> Education
                                         </TabsTrigger>
                                         <TabsTrigger value="professional" className="rounded-xl data-[state=active]:bg-white data-[state=active]:text-indigo-600 data-[state=active]:shadow-sm font-black text-[10px] uppercase tracking-widest flex items-center gap-2">
-                                            <Briefcase className="h-4 w-4" /> Professional
+                                            <Icon name="work" className="h-4 w-4" /> Professional
                                         </TabsTrigger>
                                         <TabsTrigger value="social" className="rounded-xl data-[state=active]:bg-white data-[state=active]:text-indigo-600 data-[state=active]:shadow-sm font-black text-[10px] uppercase tracking-widest flex items-center gap-2">
-                                            <Share2 className="h-4 w-4" /> Social
+                                            <Icon name="share" className="h-4 w-4" /> Social
                                         </TabsTrigger>
                                     </TabsList>
                                 </div>
@@ -240,9 +240,9 @@ export default function EditAlumniPage() {
                                         className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl h-14 px-12 font-black uppercase tracking-widest text-[10px] shadow-xl shadow-indigo-100 transition-all active:scale-95"
                                     >
                                         {saving ? (
-                                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                            <Icon name="progress_activity" className="mr-2 h-4 w-4 animate-spin" />
                                         ) : (
-                                            <Save className="mr-2 h-4 w-4" />
+                                            <Icon name="save" className="mr-2 h-4 w-4" />
                                         )}
                                         Update Registry
                                     </Button>
@@ -252,8 +252,8 @@ export default function EditAlumniPage() {
                     </motion.div>
                 </main>
 
-                <Footer />
+
             </div>
-        </ProtectedRoute>
+
     );
 }

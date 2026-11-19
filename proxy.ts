@@ -23,12 +23,15 @@ export async function proxy(request: NextRequest) {
 
   const cspHeader = [
     "default-src 'self'",
-    `script-src 'self' ${process.env.NODE_ENV === 'development' ? "'unsafe-eval'" : ""} 'nonce-${nonce}' https://www.gstatic.com https://*.firebaseio.com https://www.google.com/recaptcha/ https://www.gstatic.com/recaptcha/ https://apis.google.com https://cdn.jsdelivr.net`,
+    `script-src 'self' ${process.env.NODE_ENV === "development" ? "'unsafe-eval'" : ""} 'nonce-${nonce}' https://www.gstatic.com https://*.firebaseio.com https://www.google.com/recaptcha/ https://www.gstatic.com/recaptcha/ https://apis.google.com https://cdn.jsdelivr.net https://www.googletagmanager.com https://www.google-analytics.com`,
     "style-src 'self' 'unsafe-inline' https://www.gstatic.com/recaptcha/ https://fonts.googleapis.com",
     "img-src 'self' data: blob: https: https://firebasestorage.googleapis.com https://www.gstatic.com https://www.google.com/recaptcha/ https://www.gstatic.com/recaptcha/",
     "font-src 'self' https://fonts.gstatic.com data:",
-    "connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://securetoken.googleapis.com https://identitytoolkit.googleapis.com https://firebasestorage.googleapis.com https://www.google.com/recaptcha/ https://www.gstatic.com/recaptcha/ https://api.ipify.org wss://*.firebaseio.com",
-    "frame-src https://www.google.com/recaptcha/ https://recaptcha.google.com/",
+    "connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://securetoken.googleapis.com https://identitytoolkit.googleapis.com https://firebasestorage.googleapis.com https://www.google.com/recaptcha/ https://www.gstatic.com/recaptcha/ https://api.ipify.org wss://*.firebaseio.com https://www.googletagmanager.com https://www.google-analytics.com https://region1.analytics.google.com https://region1.google-analytics.com",
+    "frame-src https://www.google.com/recaptcha/ https://recaptcha.google.com/ https://*.firebaseio.com",
+    "frame-ancestors 'self'",
+    "base-uri 'self'",
+    "object-src 'none'",
     "worker-src 'self' blob:",
     "child-src blob:",
     "media-src 'self'",
@@ -42,7 +45,5 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: [
-    "/((?!_next/static|_next/image|favicon.ico).*)",
-  ],
+  matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
 };

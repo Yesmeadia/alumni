@@ -1,347 +1,196 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
-import { Eye, EyeOff, Mail, Lock, ArrowRight, Shield, CheckCircle } from 'lucide-react';
+import { useState } from 'react';
+import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
-
-// Alumni data
-const alumniData = [
-  {
-    name: "Akeel Shah KAS",
-    position: "DYSP",
-    department: "J & K Police",
-    image: "/images/alumni/akeel_shah.jpeg"
-  },
-  {
-    name: "Dr. Mohammad Shabaz",
-    position: "Scientist, Senior Asst. Professor",
-    department: "Model Institute of Engineering and Technology, Jammu",
-    image: "/images/alumni/mohammad_shabaz.jpg"
-  },
-  {
-    name: "Ishrat Sultana KAS",
-    position: "DYSP",
-    department: "J & K Police",
-    image: "/images/alumni/Israt_sultana.jpg"
-  },
-  {
-    name: "Dr. Mohammad Owais",
-    position: "General Physician",
-    department: "BUMS (KU) MD",
-    image: "/images/alumni/mohammad-owais.jpg"
-  },
-];
-
-declare global {
-  interface Window {
-    grecaptcha: any;
-    onRecaptchaLoad?: () => void;
-  }
-}
+import { Icon } from '@/components/ui/icon';
+import { FEATURED_ALUMNI } from '@/data/alumni';
+import { useRecaptcha } from '@/hooks/useRecaptcha';
+import { getFirebaseAuthErrorMessage } from '@/lib/authErrors';
 
 export default function LoginForm() {
   const { login } = useAuth();
-  
+  const {
+    containerRef: recaptchaRef,
+    ready: recaptchaReady,
+    error: recaptchaError,
+    getToken,
+    reset: resetRecaptcha,
+  } = useRecaptcha();
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState('');
+  const [formError, setFormError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [recaptchaReady, setRecaptchaReady] = useState(false);
-  const [currentAlumniIndex, setCurrentAlumniIndex] = useState(0);
-  const [emailFocused, setEmailFocused] = useState(false);
-  const [passwordFocused, setPasswordFocused] = useState(false);
-  const recaptchaRef = useRef<HTMLDivElement>(null);
-  const scriptLoadedRef = useRef(false);
 
-  // Auto-rotate alumni every 5 seconds
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentAlumniIndex((prev) => (prev + 1) % alumniData.length);
-    }, 5000);
-    return () => clearInterval(interval);
-  }, []);
+  const error = formError || recaptchaError;
 
-  // Load reCAPTCHA script
-  useEffect(() => {
-    if (scriptLoadedRef.current) return;
-    scriptLoadedRef.current = true;
-
-    const siteKey = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY;
-    
-    if (!siteKey) {
-      console.error('reCAPTCHA site key is not configured');
-      setError('Security verification is not configured. Please contact support.');
-      return;
-    }
-
-    window.onRecaptchaLoad = () => {
-      if (window.grecaptcha && recaptchaRef.current) {
-        try {
-          window.grecaptcha.render(recaptchaRef.current, {
-            sitekey: siteKey,
-            theme: 'light',
-          });
-          setRecaptchaReady(true);
-        } catch (err) {
-          console.error('Error rendering reCAPTCHA:', err);
-          setError('Failed to initialize security verification. Please check your site configuration.');
-        }
-      }
-    };
-
-    const script = document.createElement('script');
-    script.src = 'https://www.google.com/recaptcha/api.js?onload=onRecaptchaLoad&render=explicit';
-    script.async = true;
-    script.defer = true;
-    script.onerror = () => {
-      console.error('Failed to load reCAPTCHA script');
-      setError('Failed to load security verification. Please refresh the page.');
-    };
-
-    document.head.appendChild(script);
-
-    return () => {
-      delete window.onRecaptchaLoad;
-    };
-  }, []);
-
-  const handleSubmit = async (e: React.MouseEvent | React.KeyboardEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
+    setFormError('');
 
-    if (!recaptchaReady || !window.grecaptcha) {
-      setError('Security verification is not ready. Please refresh the page.');
+    if (!recaptchaReady) {
+      setFormError('Security verification is not ready. Please refresh the page.');
       return;
     }
 
-    const recaptchaToken = window.grecaptcha.getResponse();
+    const recaptchaToken = getToken();
     if (!recaptchaToken) {
-      setError('Please complete the reCAPTCHA verification.');
+      setFormError('Please complete the reCAPTCHA verification.');
       return;
     }
 
     if (!email || !password) {
-      setError('Please fill in all fields.');
+      setFormError('Please fill in all fields.');
       return;
     }
 
     setLoading(true);
-
     try {
-      // Firebase login - handles redirect automatically
+      // Enforce server-side reCAPTCHA & credential verification before establishing client session
+      const verifyRes = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password, recaptchaToken }),
+      });
+
+      if (!verifyRes.ok) {
+        const data = await verifyRes.json().catch(() => ({}));
+        setFormError(data.message || 'Invalid email or password.');
+        resetRecaptcha();
+        return;
+      }
+
       await login(email, password);
     } catch (err: any) {
       console.error('Login error:', err);
-      
-      // Handle specific Firebase errors
-      if (err.code === 'auth/user-not-found') {
-        setError('No account found with this email.');
-      } else if (err.code === 'auth/wrong-password') {
-        setError('Incorrect password. Please try again.');
-      } else if (err.code === 'auth/invalid-email') {
-        setError('Invalid email address.');
-      } else if (err.code === 'auth/user-disabled') {
-        setError('This account has been disabled.');
-      } else {
-        setError(err.message || 'Failed to login. Please check your credentials.');
-      }
-      
-      if (window.grecaptcha) window.grecaptcha.reset();
+      setFormError(getFirebaseAuthErrorMessage(err));
+      resetRecaptcha();
     } finally {
       setLoading(false);
     }
   };
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !loading) {
-      handleSubmit(e);
-    }
-  };
-
-  const currentAlumni = alumniData[currentAlumniIndex];
-
   return (
-    <div className="min-h-screen flex flex-col lg:flex-row bg-gray-100">
-      {/* Left Side - Alumni Showcase & Branding */}
-      <div className="lg:w-1/2 relative overflow-hidden bg-blue-900">
-        {/* Animated Background */}
-        <div className="absolute inset-0">
-          <div className="absolute top-0 left-0 w-96 h-96 bg-blue-400 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-pulse"></div>
-          <div className="absolute bottom-0 right-0 w-96 h-96 bg-purple-400 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-pulse" style={{ animationDelay: '1s' }}></div>
-        </div>
-
-        {/* Content */}
-        <div className="relative z-10 flex flex-col justify-center items-center min-h-screen p-8 lg:p-12">
-          {/* Logo */}
-          <div className="text-center mb-8">
-            <img
-              src="/footer_logo.png"
-              alt="YES INDIA Logo"
-              className="w-32 h-32 mx-auto object-contain"
-              onError={(e) => {
-                (e.target as HTMLImageElement).src = 'https://via.placeholder.com/128?text=Logo';
-              }}
-            />
+    <section className="w-full min-h-[calc(100vh-5rem)] grid grid-cols-1 lg:grid-cols-2">
+      {/* Left Side — Deep Indigo Panel with Compact Static Alumni Photo Grid */}
+      <div className="bg-[#2a1b63] text-white p-8 sm:p-10 lg:p-14 flex flex-col justify-center">
+        <div className="max-w-sm mx-auto w-full">
+          <div className="mb-6">
+            <span className="text-xs font-bold uppercase tracking-[0.18em] text-[#d6be8a]">
+              YES INDIA Alumni Network
+            </span>
+            <h2 className="font-display text-2xl sm:text-3xl font-bold text-white mt-2 leading-tight">
+              A Community of Leaders &amp; Changemakers
+            </h2>
+            <p className="text-xs sm:text-sm text-white/75 mt-2.5 leading-relaxed">
+              Connecting YES INDIA graduates across public service, healthcare, academia, and
+              industry.
+            </p>
           </div>
 
-          {/* Alumni Spotlight */}
-          <div className="w-full max-w-md">
-            <div className="bg-white/10 backdrop-blur-xl rounded-3xl p-8 shadow-2xl border border-white/20">
-              <div className="flex items-center text-center justify-center mb-6">
-                <h2 className="text-xl font-semibold text-white">Featured Alumni</h2>
-              </div>
-
-              {/* Alumni Card with Smooth Transition */}
-              <div className="relative">
-                <div className="flex flex-col items-center text-center">
-                  {/* Image */}
-                  <div className="relative mb-6">
-                    <div className="absolute inset-0 bg-gradient-to-br from-blue-400 to-purple-400 rounded-full blur-xl opacity-50"></div>
-                    <div className="relative w-32 h-32 rounded-full bg-gradient-to-br from-blue-300 to-purple-300 p-1 shadow-xl">
-                      <div className="w-full h-full rounded-full overflow-hidden bg-white">
-                        <img
-                          src={currentAlumni.image}
-                          alt={currentAlumni.name}
-                          className="w-full h-full object-cover"
-                          onError={(e) => {
-                            const target = e.target as HTMLImageElement;
-                            target.style.display = 'none';
-                            const parent = target.parentElement;
-                            if (parent) {
-                              parent.innerHTML = `<div class="flex items-center justify-center h-full bg-gradient-to-br from-blue-500 to-purple-500 text-white text-4xl font-bold">${currentAlumni.name.charAt(0)}</div>`;
-                            }
-                          }}
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Info */}
-                  <h3 className="text-xl font-bold text-white mb-2">{currentAlumni.name}</h3>
-                  <p className="text-blue-100 font-medium mb-1">{currentAlumni.position}</p>
-                  {currentAlumni.department && (
-                    <p className="text-sm text-blue-200/80">{currentAlumni.department}</p>
-                  )}
-                </div>
-
-                {/* Indicators */}
-                <div className="flex justify-center gap-2 mt-6">
-                  {alumniData.map((_, index) => (
-                    <button
-                      key={index}
-                      onClick={() => setCurrentAlumniIndex(index)}
-                      className={`h-1.5 rounded-full transition-all duration-300 ${
-                        index === currentAlumniIndex 
-                          ? 'bg-white w-8' 
-                          : 'bg-white/40 w-1.5 hover:bg-white/60'
-                      }`}
-                      aria-label={`Go to alumni ${index + 1}`}
-                    />
-                  ))}
+          {/* Compact 2x2 Alumni Photo Collage */}
+          <div className="grid grid-cols-2 gap-3">
+            {FEATURED_ALUMNI.map((person) => (
+              <div
+                key={person.name}
+                className="relative h-36 sm:h-40 rounded-xl overflow-hidden bg-[#1e124a] border border-white/15"
+              >
+                <img
+                  src={person.image}
+                  alt={person.name}
+                  className="w-full h-full object-cover object-top"
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    target.style.display = 'none';
+                  }}
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#140b36]/90 via-[#140b36]/20 to-transparent" />
+                <div className="absolute inset-x-0 bottom-0 p-2.5">
+                  <p className="text-[9px] font-bold uppercase tracking-[0.12em] text-[#d6be8a] truncate">
+                    {person.position}
+                  </p>
+                  <p className="font-display text-xs font-bold text-white leading-tight mt-0.5 truncate">
+                    {person.name}
+                  </p>
                 </div>
               </div>
-            </div>
-          </div>
-
-          {/* Features */}
-          <div className="hidden lg:grid grid-cols-2 gap-4 mt-8 w-full max-w-md">
-            <div className="flex items-center gap-3 bg-white/10 backdrop-blur-sm rounded-xl p-3 border border-white/20">
-              <CheckCircle className="w-5 h-5 text-green-300 flex-shrink-0" />
-              <span className="text-sm text-white">Secure Login</span>
-            </div>
-            <div className="flex items-center gap-3 bg-white/10 backdrop-blur-sm rounded-xl p-3 border border-white/20">
-              <CheckCircle className="w-5 h-5 text-green-300 flex-shrink-0" />
-              <span className="text-sm text-white">Protected Data</span>
-            </div>
+            ))}
           </div>
         </div>
       </div>
 
-      {/* Right Side - Login Form */}
-      <div className="lg:w-1/2 flex items-center justify-center p-6 lg:p-12">
+      {/* Right Side — Clean White Sign-In Form */}
+      <div className="bg-white p-8 sm:p-12 lg:p-16 flex items-center justify-center">
         <div className="w-full max-w-md">
-          {/* Welcome Header */}
           <div className="mb-8">
-            <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-2">Welcome Back</h2>
-            <p className="text-gray-600">Sign in to access your alumni dashboard</p>
+            <h1 className="font-display text-3xl sm:text-4xl font-bold text-[#2a1b63] tracking-tight mt-1.5">
+              Sign In
+            </h1>
+            <p className="text-sm text-gray-600 mt-1.5">
+              Sign in with your registered credentials to access the alumni dashboard.
+            </p>
           </div>
 
-          {/* Error Alert */}
           {error && (
-            <div className="mb-6 p-4 bg-red-50 border-l-4 border-red-500 rounded-lg">
-              <div className="flex items-start gap-3">
-                <div className="flex-shrink-0 w-5 h-5 text-red-500 mt-0.5">⚠</div>
-                <p className="text-sm text-red-800">{error}</p>
-              </div>
+            <div className="mb-5 p-4 bg-red-50 border-l-4 border-red-600 rounded-r-lg">
+              <p className="text-sm text-red-800 font-medium">{error}</p>
             </div>
           )}
 
-          {/* Loading Alert */}
-          {!recaptchaReady && (
-            <div className="mb-6 p-4 bg-blue-50 border-l-4 border-blue-500 rounded-lg">
-              <div className="flex items-start gap-3">
-                <Shield className="w-5 h-5 text-blue-500 flex-shrink-0 mt-0.5 animate-pulse" />
-                <p className="text-sm text-blue-800">Loading security verification...</p>
-              </div>
+          {!recaptchaReady && !recaptchaError && (
+            <div className="mb-5 p-4 bg-[#f7f4ed] border-l-4 border-[#a5874c] rounded-r-lg">
+              <p className="text-sm text-[#2a1b63] font-medium">
+                Loading security verification...
+              </p>
             </div>
           )}
 
-          {/* Login Form */}
-          <div className="space-y-6">
-            {/* Email Input */}
+          <form onSubmit={handleSubmit} className="space-y-5">
             <div>
-              <label htmlFor="email" className="block text-sm font-semibold text-gray-700 mb-2">
+              <label
+                htmlFor="email"
+                className="block text-sm font-semibold text-[#212529] mb-2"
+              >
                 Email Address
               </label>
-              <div className={`relative transition-all duration-200 ${emailFocused ? 'scale-[1.01]' : ''}`}>
-                <Mail className={`absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 transition-colors ${
-                  emailFocused ? 'text-blue-600' : 'text-gray-400'
-                }`} />
-                <input
-                  id="email"
-                  type="email"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  onFocus={() => setEmailFocused(true)}
-                  onBlur={() => setEmailFocused(false)}
-                  onKeyPress={handleKeyPress}
-                  className={`w-full pl-12 pr-4 py-3.5 bg-white border-2 rounded-xl text-gray-900 placeholder-gray-400 transition-all duration-200 focus:outline-none ${
-                    emailFocused 
-                      ? 'border-blue-500 shadow-lg shadow-blue-100' 
-                      : 'border-gray-200 hover:border-gray-300'
-                  }`}
-                  placeholder="your.email@example.com"
-                  disabled={loading}
-                  autoComplete="email"
-                />
-              </div>
+              <input
+                id="email"
+                type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg text-sm text-[#212529] placeholder-gray-400 transition-colors focus:outline-none focus:border-[#2a1b63] focus:ring-2 focus:ring-[#2a1b63]/15"
+                placeholder="your.email@example.com"
+                disabled={loading}
+                autoComplete="email"
+              />
             </div>
 
-            {/* Password Input */}
             <div>
-              <label htmlFor="password" className="block text-sm font-semibold text-gray-700 mb-2">
-                Password
-              </label>
-              <div className={`relative transition-all duration-200 ${passwordFocused ? 'scale-[1.01]' : ''}`}>
-                <Lock className={`absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 transition-colors ${
-                  passwordFocused ? 'text-blue-600' : 'text-gray-400'
-                }`} />
+              <div className="flex items-center justify-between mb-2">
+                <label
+                  htmlFor="password"
+                  className="block text-sm font-semibold text-[#212529]"
+                >
+                  Password
+                </label>
+                <Link
+                  href="/forgot-password"
+                  className="text-xs font-semibold text-[#2a1b63] hover:text-[#a5874c] transition-colors"
+                >
+                  Forgot password?
+                </Link>
+              </div>
+              <div className="relative">
                 <input
                   id="password"
                   type={showPassword ? 'text' : 'password'}
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  onFocus={() => setPasswordFocused(true)}
-                  onBlur={() => setPasswordFocused(false)}
-                  onKeyPress={handleKeyPress}
-                  className={`w-full pl-12 pr-12 py-3.5 bg-white border-2 rounded-xl text-gray-900 placeholder-gray-400 transition-all duration-200 focus:outline-none ${
-                    passwordFocused 
-                      ? 'border-blue-500 shadow-lg shadow-blue-100' 
-                      : 'border-gray-200 hover:border-gray-300'
-                  }`}
+                  className="w-full pl-4 pr-11 py-3 bg-white border border-gray-300 rounded-lg text-sm text-[#212529] placeholder-gray-400 transition-colors focus:outline-none focus:border-[#2a1b63] focus:ring-2 focus:ring-[#2a1b63]/15"
                   placeholder="Enter your password"
                   disabled={loading}
                   autoComplete="current-password"
@@ -349,81 +198,58 @@ export default function LoginForm() {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 focus:outline-none transition-colors disabled:opacity-50"
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-[#2a1b63] focus:outline-none transition-colors disabled:opacity-50"
                   aria-label={showPassword ? 'Hide password' : 'Show password'}
                   disabled={loading}
                 >
-                  {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                  <Icon
+                    name={showPassword ? 'visibility_off' : 'visibility'}
+                    className="text-[20px]"
+                  />
                 </button>
               </div>
             </div>
 
-            {/* Remember & Forgot */}
-            <div className="flex items-center justify-between">
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
-                  disabled={loading}
-                />
-                <span className="text-sm text-gray-600">Remember me</span>
-              </label>
-              <a href="/forgot-password" className="text-sm font-semibold text-blue-600 hover:text-blue-700 transition-colors">
-                Forgot password?
-              </a>
+            <label className="flex items-center gap-2.5 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                className="w-4 h-4 rounded border-gray-300 text-[#2a1b63] focus:ring-[#2a1b63]"
+                disabled={loading}
+              />
+              <span className="text-sm text-gray-600">Keep me signed in</span>
+            </label>
+
+            <div className="pt-1">
+              <div ref={recaptchaRef} />
             </div>
 
-            {/* reCAPTCHA */}
-            <div className="flex justify-center py-2">
-              <div ref={recaptchaRef}></div>
-            </div>
-
-            {/* Submit Button */}
             <button
-              onClick={handleSubmit}
+              type="submit"
               disabled={loading || !recaptchaReady}
-              className="group w-full bg-blue-900 hover:from-blue-700 hover:to-purple-700 text-white py-3.5 rounded-xl font-semibold focus:outline-none focus:ring-4 focus:ring-blue-300 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl hover:scale-[1.02] flex items-center justify-center gap-2"
+              className="w-full bg-[#2a1b63] hover:bg-[#1f134c] text-white py-3.5 rounded-lg font-semibold text-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
               {loading ? (
                 <>
-                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                  <Icon name="progress_activity" className="text-[18px] animate-spin" />
                   <span>Signing in...</span>
                 </>
               ) : (
-                <>
-                  <span>Sign In to Dashboard</span>
-                  <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                </>
+                <span>Sign In to Dashboard</span>
               )}
             </button>
-          </div>
+          </form>
 
-          {/* Footer */}
-          <div className="mt-8 pt-6 border-t border-gray-200">
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-              <p className="text-xs text-gray-500">
-                © {new Date().getFullYear()} YES INDIA Foundation. All rights reserved.
-              </p>
-              <a
-                href="https://yesindiafoundation.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-2 text-xs text-gray-500 hover:text-gray-700 transition-colors"
-              >
-                <span>Powered by</span>
-                <img
-                  src="/cyber-logo.png"
-                  alt="Cyberduce"
-                  className="h-4 w-auto"
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).src = 'https://via.placeholder.com/40x16?text=Cyberduce';
-                  }}
-                />
-              </a>
-            </div>
+          <div className="mt-7 pt-6 border-t border-gray-100 text-center text-sm text-gray-600">
+            Not registered yet?{' '}
+            <Link
+              href="/register"
+              className="font-semibold text-[#2a1b63] hover:text-[#a5874c] transition-colors"
+            >
+              Register as Alumni &rarr;
+            </Link>
           </div>
         </div>
       </div>
-    </div>
+    </section>
   );
 }

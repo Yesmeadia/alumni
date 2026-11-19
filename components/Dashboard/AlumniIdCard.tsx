@@ -4,7 +4,7 @@
 import React from 'react';
 import { Avatar, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { Globe } from 'lucide-react';
+import { Icon } from '@/components/ui/icon';
 import { AlumniData } from '@/lib/types';
 
 interface AlumniIdCardProps {

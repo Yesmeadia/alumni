@@ -1,6 +1,7 @@
 export interface AlumniData {
   id?: string;
   fullName: string;
+  gender?: string;
   address: string;
   place: string;
   state: string;
@@ -36,6 +37,8 @@ export interface AlumniData {
   email?: string;
   university?: string;
 }
+
+export const GENDER_OPTIONS = ['Male', 'Female', 'Other'];
 
 export const LAST_CLASS_OPTIONS = [
   '10th Class',
@@ -187,3 +190,50 @@ export interface SuccessMessageProps {
   fullName: string;
   onGoHome: () => void;
 }
+
+export type JobTypeOption = 'Full-time' | 'Part-time' | 'Internship' | 'Remote' | 'Contract';
+export type JobApplicationStatus = 'pending' | 'reviewed' | 'shortlisted' | 'rejected';
+
+export interface JobApplicationData {
+  id?: string;
+  alumniId: string;
+  fullName: string;
+  mobileNumber: string;
+  whatsappNumber?: string;
+  email?: string;
+  schoolAttended?: string;
+  yearOfGraduation?: string;
+  qualification?: string;
+  photoURL?: string;
+  positionApplied: string;
+  preferredLocation: string;
+  willingForAbroad?: 'Yes' | 'No';
+  jobType: JobTypeOption;
+  experienceYears: string;
+  expectedSalary?: string;
+  noticePeriod?: string;
+  skills: string;
+  resumeURL?: string;
+  resumeFileName?: string;
+  coverNote?: string;
+  status: JobApplicationStatus;
+  appliedAt: string;
+  createdAt: number;
+  updatedAt?: number;
+}
+
+export const JOB_TYPE_OPTIONS: JobTypeOption[] = [
+  'Full-time',
+  'Part-time',
+  'Internship',
+  'Remote',
+  'Contract',
+];
+
+export const NOTICE_PERIOD_OPTIONS = [
+  'Immediate',
+  '15 Days',
+  '30 Days',
+  '60 Days',
+  '90 Days',
+];

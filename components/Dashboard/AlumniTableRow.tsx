@@ -1,16 +1,13 @@
-// components/dashboard/AlumniTableRow.tsx
 'use client';
 
-import React, { useRef, useEffect } from 'react';
-import gsap from 'gsap';
+import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
 import { TableCell, TableRow } from '@/components/ui/table';
-import { Eye, MapPin, Building2, ExternalLink, ShieldCheck } from 'lucide-react';
+import { Icon } from '@/components/ui/icon';
 import { AlumniData } from '@/lib/types';
 
-interface AlumniWithId extends AlumniData {
+export interface AlumniWithId extends AlumniData {
   id: string;
 }
 
@@ -18,99 +15,122 @@ interface AlumniTableRowProps {
   alumni: AlumniWithId;
   index: number;
   onClick: (alumni: AlumniWithId) => void;
+  onEdit?: (id: string) => void;
+  onDelete?: (id: string) => void;
 }
 
-const AlumniTableRow: React.FC<AlumniTableRowProps> = ({ alumni, index, onClick }) => {
-  const rowRef = useRef<HTMLTableRowElement>(null);
-
-  useEffect(() => {
-    if (!rowRef.current) return;
-    
-    gsap.fromTo(rowRef.current,
-      { opacity: 0, x: -20 },
-      { 
-        opacity: 1, 
-        x: 0, 
-        duration: 0.5, 
-        delay: index * 0.05,
-        ease: "power2.out",
-        scrollTrigger: {
-          trigger: rowRef.current,
-          start: "top 95%",
-          toggleActions: "play none none none"
-        }
-      }
-    );
-  }, [index]);
+const AlumniTableRow: React.FC<AlumniTableRowProps> = ({
+  alumni,
+  onClick,
+  onEdit,
+  onDelete,
+}) => {
+  const locationText = [alumni.place, alumni.state].filter(Boolean).join(', ') || '—';
 
   return (
     <TableRow
-      ref={rowRef}
-      className="group hover:bg-slate-50/80 transition-all duration-300 border-slate-100 cursor-pointer"
+      className="group hover:bg-[#FAFBFF] transition-colors border-[#E5E7EB]/70 cursor-pointer"
       onClick={() => onClick(alumni)}
     >
-      <TableCell className="pl-8 py-5">
-        <div className="relative inline-block">
-          <Avatar className="h-14 w-14 ring-4 ring-white shadow-md relative z-10 rounded-2xl">
+      {/* 1. Alumni Profile */}
+      <TableCell className="py-3.5 pl-5">
+        <div className="flex items-center gap-3 min-w-[200px]">
+          <Avatar className="h-10 w-10 rounded-xl border border-[#E5E7EB] shrink-0">
             <AvatarImage src={alumni.photoURL} alt={alumni.fullName} className="object-cover" />
-            <AvatarFallback className="bg-slate-100 text-slate-400 font-bold">
-              {alumni.fullName?.charAt(0)}
+            <AvatarFallback className="bg-[#F3F0FA] text-[#2a1b63] text-xs font-medium uppercase rounded-xl">
+              {alumni.fullName?.charAt(0) || 'A'}
             </AvatarFallback>
           </Avatar>
+          <div className="min-w-0">
+            <p className="font-medium text-[#1D1E20] text-sm truncate group-hover:text-[#2a1b63] transition-colors">
+              {alumni.fullName}
+            </p>
+            <p className="text-xs text-[#8A8F98] font-mono truncate">
+              {alumni.mobileNumber || alumni.email || '—'}
+            </p>
+          </div>
         </div>
       </TableCell>
 
-      <TableCell>
-        <div className="font-bold text-slate-800 text-sm">{alumni.fullName}</div>
-      </TableCell>
-
-      <TableCell>
-        <div className="font-semibold text-slate-600 text-xs truncate max-w-[200px]" title={alumni.schoolAttended}>
-          {alumni.schoolAttended || 'YES INDIA School'}
+      {/* 2. Institution */}
+      <TableCell className="py-3.5">
+        <div className="max-w-[220px]">
+          <p className="text-xs font-medium text-[#1D1E20] truncate" title={alumni.schoolAttended}>
+            {alumni.schoolAttended || 'YES INDIA School'}
+          </p>
+          <p className="text-[11px] text-[#8A8F98] truncate">
+            {alumni.qualification || alumni.lastClassAttended || '—'}
+          </p>
         </div>
       </TableCell>
 
-      <TableCell className="text-center">
-        <span className="text-xs font-black text-slate-400 bg-slate-100/50 px-3 py-1 rounded-lg border border-slate-100">
-          {alumni.yearOfGraduation}
+      {/* 3. Batch */}
+      <TableCell className="py-3.5 text-center">
+        <span className="inline-block px-2.5 py-0.5 rounded-full bg-[#F3F0FA] border border-[#DDD6F3] text-[#2a1b63] text-xs font-medium">
+          {alumni.yearOfGraduation || '—'}
         </span>
       </TableCell>
 
-      <TableCell>
-        <div className="flex items-center gap-3">
-          <div className="h-9 w-9 rounded-xl bg-indigo-50 text-indigo-500 flex items-center justify-center shrink-0 border border-indigo-100">
-            <Building2 className="h-4 w-4" />
-          </div>
-          <div className="overflow-hidden">
-            <div className="font-bold text-slate-800 text-[11px] truncate uppercase tracking-tight" title={alumni.currentJobTitle}>
-              {alumni.currentJobTitle || 'Member'}
-            </div>
-            <div className="text-[10px] text-slate-400 font-bold truncate">
-              {alumni.companyName || 'Private Org'}
-            </div>
-          </div>
+      {/* 4. Career */}
+      <TableCell className="py-3.5">
+        <div className="max-w-[200px]">
+          <p className="text-xs font-medium text-[#1D1E20] truncate" title={alumni.currentJobTitle}>
+            {alumni.currentJobTitle || '—'}
+          </p>
+          <p className="text-[11px] text-[#8A8F98] truncate" title={alumni.companyName}>
+            {alumni.companyName || '—'}
+          </p>
         </div>
       </TableCell>
 
-      <TableCell>
-        <div className="flex items-center text-slate-500 font-semibold gap-2">
-          <MapPin className="h-3.5 w-3.5 text-slate-300 shrink-0" />
-          <span className="truncate max-w-[150px] text-[11px] font-bold text-slate-500">{[alumni.place, alumni.state].filter(Boolean).join(', ') || 'N/A'}</span>
-        </div>
+      {/* 5. Location */}
+      <TableCell className="py-3.5">
+        <span className="text-xs text-[#5F6368] truncate block max-w-[160px]" title={locationText}>
+          {locationText}
+        </span>
       </TableCell>
 
-      <TableCell className="pr-8 text-right">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={(e) => {
-            e.stopPropagation();
-            onClick(alumni);
-          }}
-          className="h-9 w-9 p-0 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all"
+      {/* 6. Actions */}
+      <TableCell className="py-3.5 pr-5 text-right">
+        <div
+          className="inline-flex items-center justify-end gap-1"
+          onClick={(e) => e.stopPropagation()}
         >
-          <ExternalLink className="h-4 w-4" />
-        </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            title="View details"
+            onClick={() => onClick(alumni)}
+            className="h-8 w-8 p-0 text-[#5F6368] hover:text-[#2a1b63] hover:bg-[#F3F0FA] rounded-lg"
+          >
+            <Icon name="visibility" className="text-[18px]" />
+          </Button>
+          {onEdit && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              title="Edit profile"
+              onClick={() => onEdit(alumni.id)}
+              className="h-8 w-8 p-0 text-[#5F6368] hover:text-[#2a1b63] hover:bg-[#F3F0FA] rounded-lg"
+            >
+              <Icon name="edit" className="text-[18px]" />
+            </Button>
+          )}
+          {onDelete && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              title="Delete profile"
+              onClick={() => onDelete(alumni.id)}
+              className="h-8 w-8 p-0 text-[#8A8F98] hover:text-[#DC2626] hover:bg-red-50 rounded-lg"
+            >
+              <Icon name="delete" className="text-[18px]" />
+            </Button>
+          )}
+        </div>
       </TableCell>
     </TableRow>
   );

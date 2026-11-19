@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState} from 'react';
+import React, { useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -11,14 +11,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Card, CardContent } from '@/components/ui/card';
-import { INDIAN_STATES, JK_DISTRICTS, AlumniData } from '@/lib/types';
-import { Facebook, Instagram, Twitter, Linkedin, Globe, User, Phone, MapPin, Hash } from 'lucide-react';
+import { INDIAN_STATES, JK_DISTRICTS, GENDER_OPTIONS, AlumniData } from '@/lib/types';
 
 interface PersonalInfoFormProps {
   formData: Partial<AlumniData>;
   onFormDataChange: (data: Partial<AlumniData>) => void;
 }
+
+const inputClass =
+  'bg-white border-gray-300 rounded-lg focus:border-[#2a1b63] focus:ring-[#2a1b63]/15';
 
 const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({
   formData,
@@ -28,9 +29,7 @@ const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({
     return formData.whatsappNumber === formData.mobileNumber && !!formData.mobileNumber;
   });
 
-  const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement>
-  ) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     onFormDataChange({ [name]: value } as Partial<AlumniData>);
 
@@ -41,12 +40,9 @@ const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({
 
   const handleSelectChange = (name: keyof AlumniData, value: string) => {
     const updateData: Partial<AlumniData> = { [name]: value };
-    
-    // Clear district if state changes and is not J&K
     if (name === 'state' && value !== 'Jammu and Kashmir') {
       updateData.district = '';
     }
-    
     onFormDataChange(updateData);
   };
 
@@ -60,24 +56,17 @@ const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({
   const showDistrictField = formData.state === 'Jammu and Kashmir';
 
   return (
-    <div className="space-y-8">
-      {/* Personal Details Card */}
-      <Card className="border-0 shadow-lg bg-gradient-to-br from-white to-blue-50">
-        <CardContent className="p-6">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="p-2 bg-blue-100 rounded-lg">
-              <User className="w-5 h-5 text-blue-600" />
-            </div>
-            <div>
-              <h3 className="text-xl font-bold text-gray-800">Basic Information</h3>
-              <p className="text-gray-600 text-sm">Your personal identification details</p>
-            </div>
-          </div>
-          
-          <div className="grid md:grid-cols-2 gap-6">
+    <div className="space-y-10">
+      {/* Basic Information */}
+      <section>
+        <div className="mb-5">
+          <h3 className="font-display text-lg font-bold text-[#2a1b63]">Basic Information</h3>
+          <p className="text-gray-500 text-sm">Your personal identification details</p>
+        </div>
+
+        <div className="grid md:grid-cols-2 gap-5">
             <div className="space-y-2">
-              <Label htmlFor="fullName" className="flex items-center gap-2">
-                <User className="w-4 h-4 text-gray-500" />
+              <Label htmlFor="fullName" className="text-sm font-semibold text-[#212529]">
                 Full Name <span className="text-red-500">*</span>
               </Label>
               <Input
@@ -87,13 +76,33 @@ const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({
                 onChange={handleInputChange}
                 placeholder="Full Name"
                 required
-                className="bg-white border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                className={inputClass}
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="mobileNumber" className="flex items-center gap-2">
-                <Phone className="w-4 h-4 text-gray-500" />
+              <Label htmlFor="gender" className="text-sm font-semibold text-[#212529]">
+                Gender
+              </Label>
+              <Select
+                value={formData.gender || ''}
+                onValueChange={(value) => handleSelectChange('gender', value)}
+              >
+                <SelectTrigger className={inputClass}>
+                  <SelectValue placeholder="Select gender" />
+                </SelectTrigger>
+                <SelectContent>
+                  {GENDER_OPTIONS.map((option) => (
+                    <SelectItem key={option} value={option}>
+                      {option}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="mobileNumber" className="text-sm font-semibold text-[#212529]">
                 Mobile Number <span className="text-red-500">*</span>
               </Label>
               <Input
@@ -101,30 +110,30 @@ const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({
                 name="mobileNumber"
                 value={formData.mobileNumber || ''}
                 onChange={handleInputChange}
-                placeholder="Mobile Number"
+                placeholder="10-digit Mobile Number"
                 maxLength={10}
                 required
-                className="bg-white border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                className={inputClass}
               />
             </div>
-            <div className="flex items-center space-x-2 mt-2 ">
-                <Checkbox
-                  id="sameAsMobile"
-                  checked={sameAsMobile}
-                  onCheckedChange={handleCheckboxChange}
-                  className=" border border-gray-400 data-[state=checked]:border-blue-600 data-[state=checked]:bg-blue-600"
-                />
-                <label
-                  htmlFor="sameAsMobile"
-                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
-                >
-                  Same as Mobile Number
-                </label>
-              </div>
+
+            <div className="flex items-center space-x-2.5 md:col-span-2">
+              <Checkbox
+                id="sameAsMobile"
+                checked={sameAsMobile}
+                onCheckedChange={handleCheckboxChange}
+                className="border-gray-400 data-[state=checked]:border-[#2a1b63] data-[state=checked]:bg-[#2a1b63]"
+              />
+              <label
+                htmlFor="sameAsMobile"
+                className="text-sm font-medium text-gray-700 cursor-pointer"
+              >
+                WhatsApp number is the same as Mobile Number
+              </label>
+            </div>
 
             <div className="space-y-2 md:col-span-2">
-              <Label htmlFor="whatsappNumber" className="flex items-center gap-2">
-                <Phone className="w-4 h-4 text-gray-500" />
+              <Label htmlFor="whatsappNumber" className="text-sm font-semibold text-[#212529]">
                 WhatsApp Number <span className="text-red-500">*</span>
               </Label>
               <Input
@@ -132,38 +141,30 @@ const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({
                 name="whatsappNumber"
                 value={formData.whatsappNumber || ''}
                 onChange={handleInputChange}
-                placeholder="WhatsApp Numbers"
+                placeholder="10-digit WhatsApp Number"
                 maxLength={10}
                 required
                 disabled={sameAsMobile}
-                className="bg-white border-gray-300 focus:border-blue-500 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                className={`${inputClass} disabled:bg-gray-100 disabled:cursor-not-allowed`}
               />
             </div>
-          </div>
-        </CardContent>
-      </Card>
+        </div>
+      </section>
 
-      {/* Social Media Card */}
-      <Card className="border-0 shadow-lg bg-gradient-to-br from-white to-purple-50">
-        <CardContent className="p-6">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="p-2 bg-purple-100 rounded-lg">
-              <Globe className="w-5 h-5 text-purple-600" />
-            </div>
-            <div>
-              <h3 className="text-xl font-bold text-gray-800">Social Media Profiles</h3>
-              <p className="text-gray-600 text-sm">Optional - Enter only your profile ID/username</p>
-            </div>
-          </div>
-          
-          <div className="grid md:grid-cols-2 gap-6">
+      {/* Social Media Profiles */}
+      <section className="pt-8 border-t border-gray-200">
+        <div className="mb-5">
+          <h3 className="font-display text-lg font-bold text-[#2a1b63]">Social Media Profiles</h3>
+          <p className="text-gray-500 text-sm">Optional &mdash; enter only your profile username</p>
+        </div>
+
+        <div className="grid md:grid-cols-2 gap-5">
             <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <Facebook className="h-4 w-4 text-blue-600" />
-                <Label htmlFor="facebookLink">Facebook</Label>
-              </div>
+              <Label htmlFor="facebookLink" className="text-sm font-semibold text-[#212529]">
+                Facebook
+              </Label>
               <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm pointer-events-none">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm pointer-events-none">
                   facebook.com/
                 </span>
                 <Input
@@ -172,18 +173,17 @@ const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({
                   value={formData.facebookLink || ''}
                   onChange={handleInputChange}
                   placeholder="yourprofile"
-                  className="bg-white border-gray-300 focus:border-blue-500 focus:ring-blue-500 pl-[110px]"
+                  className={`${inputClass} pl-[110px]`}
                 />
               </div>
             </div>
 
             <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <Instagram className="h-4 w-4 text-pink-600" />
-                <Label htmlFor="instagramLink">Instagram</Label>
-              </div>
+              <Label htmlFor="instagramLink" className="text-sm font-semibold text-[#212529]">
+                Instagram
+              </Label>
               <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm pointer-events-none">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm pointer-events-none">
                   instagram.com/
                 </span>
                 <Input
@@ -192,18 +192,17 @@ const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({
                   value={formData.instagramLink || ''}
                   onChange={handleInputChange}
                   placeholder="yourprofile"
-                  className="bg-white border-gray-300 focus:border-pink-500 focus:ring-pink-500 pl-[115px]"
+                  className={`${inputClass} pl-[115px]`}
                 />
               </div>
             </div>
 
             <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <Twitter className="h-4 w-4 text-blue-400" />
-                <Label htmlFor="twitterLink">Twitter/X</Label>
-              </div>
+              <Label htmlFor="twitterLink" className="text-sm font-semibold text-[#212529]">
+                Twitter / X
+              </Label>
               <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm pointer-events-none">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm pointer-events-none">
                   x.com/
                 </span>
                 <Input
@@ -212,18 +211,17 @@ const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({
                   value={formData.twitterLink || ''}
                   onChange={handleInputChange}
                   placeholder="yourprofile"
-                  className="bg-white border-gray-300 focus:border-blue-400 focus:ring-blue-400 pl-[65px]"
+                  className={`${inputClass} pl-[62px]`}
                 />
               </div>
             </div>
 
             <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <Linkedin className="h-4 w-4 text-blue-700" />
-                <Label htmlFor="linkedinLink">LinkedIn</Label>
-              </div>
+              <Label htmlFor="linkedinLink" className="text-sm font-semibold text-[#212529]">
+                LinkedIn
+              </Label>
               <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm pointer-events-none">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm pointer-events-none">
                   linkedin.com/in/
                 </span>
                 <Input
@@ -232,31 +230,23 @@ const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({
                   value={formData.linkedinLink || ''}
                   onChange={handleInputChange}
                   placeholder="yourprofile"
-                  className="bg-white border-gray-300 focus:border-blue-700 focus:ring-blue-700 pl-[125px]"
+                  className={`${inputClass} pl-[122px]`}
                 />
               </div>
             </div>
-          </div>
-        </CardContent>
-      </Card>
+        </div>
+      </section>
 
-      {/* Address Card */}
-      <Card className="border-0 shadow-lg bg-gradient-to-br from-white to-green-50">
-        <CardContent className="p-6">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="p-2 bg-green-100 rounded-lg">
-              <MapPin className="w-5 h-5 text-green-600" />
-            </div>
-            <div>
-              <h3 className="text-xl font-bold text-gray-800">Address Details</h3>
-              <p className="text-gray-600 text-sm">Your current residential address</p>
-            </div>
-          </div>
-          
-          <div className="grid md:grid-cols-2 gap-6">
+      {/* Address Details */}
+      <section className="pt-8 border-t border-gray-200">
+        <div className="mb-5">
+          <h3 className="font-display text-lg font-bold text-[#2a1b63]">Address Details</h3>
+          <p className="text-gray-500 text-sm">Your current residential address</p>
+        </div>
+
+        <div className="grid md:grid-cols-2 gap-5">
             <div className="space-y-2 md:col-span-2">
-              <Label htmlFor="address" className="flex items-center gap-2">
-                <MapPin className="w-4 h-4 text-gray-500" />
+              <Label htmlFor="address" className="text-sm font-semibold text-[#212529]">
                 Complete Address <span className="text-red-500">*</span>
               </Label>
               <Input
@@ -266,24 +256,24 @@ const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({
                 onChange={handleInputChange}
                 placeholder="House no., Street, Area, Landmark"
                 required
-                className="bg-white border-gray-300 focus:border-green-500 focus:ring-green-500"
+                className={inputClass}
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="state">
+              <Label htmlFor="state" className="text-sm font-semibold text-[#212529]">
                 State <span className="text-red-500">*</span>
               </Label>
               <Select
                 value={formData.state || ''}
                 onValueChange={(value) => handleSelectChange('state', value)}
               >
-                <SelectTrigger className="bg-white border-gray-300 focus:border-green-500 focus:ring-green-500">
+                <SelectTrigger className={inputClass}>
                   <SelectValue placeholder="Select your state" />
                 </SelectTrigger>
                 <SelectContent>
                   {INDIAN_STATES.map((state) => (
-                    <SelectItem key={state} value={state} className="focus:bg-green-50">
+                    <SelectItem key={state} value={state}>
                       {state}
                     </SelectItem>
                   ))}
@@ -293,20 +283,22 @@ const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({
 
             {showDistrictField && (
               <div className="space-y-2">
-                <Label htmlFor="district">
+                <Label htmlFor="district" className="text-sm font-semibold text-[#212529]">
                   District <span className="text-red-500">*</span>
-                  <span className="text-xs text-gray-500 ml-1">(Required for Jammu & Kashmir)</span>
+                  <span className="text-xs text-gray-500 font-normal ml-1">
+                    (Required for Jammu &amp; Kashmir)
+                  </span>
                 </Label>
                 <Select
                   value={formData.district || ''}
                   onValueChange={(value) => handleSelectChange('district', value)}
                 >
-                  <SelectTrigger className="bg-white border-gray-300 focus:border-green-500 focus:ring-green-500">
+                  <SelectTrigger className={inputClass}>
                     <SelectValue placeholder="Select your district" />
                   </SelectTrigger>
                   <SelectContent>
                     {JK_DISTRICTS.map((district) => (
-                      <SelectItem key={district} value={district} className="focus:bg-green-50">
+                      <SelectItem key={district} value={district}>
                         {district}
                       </SelectItem>
                     ))}
@@ -316,37 +308,35 @@ const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({
             )}
 
             <div className="space-y-2">
-              <Label htmlFor="place">
-                City/Town 
+              <Label htmlFor="place" className="text-sm font-semibold text-[#212529]">
+                City / Town
               </Label>
               <Input
                 id="place"
                 name="place"
                 value={formData.place || ''}
                 onChange={handleInputChange}
-                placeholder="Place"
-                className="bg-white border-gray-300 focus:border-green-500 focus:ring-green-500"
+                placeholder="City or town"
+                className={inputClass}
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="pinCode" className="flex items-center gap-2">
-                <Hash className="w-4 h-4 text-gray-500" />
-                Pin Code 
+              <Label htmlFor="pinCode" className="text-sm font-semibold text-[#212529]">
+                Pin Code
               </Label>
               <Input
                 id="pinCode"
                 name="pinCode"
                 value={formData.pinCode || ''}
                 onChange={handleInputChange}
-                placeholder="Pin code"
+                placeholder="6-digit Pin Code"
                 maxLength={6}
-                className="bg-white border-gray-300 focus:border-green-500 focus:ring-green-500"
+                className={inputClass}
               />
             </div>
-          </div>
-        </CardContent>
-      </Card>
+        </div>
+      </section>
     </div>
   );
 };

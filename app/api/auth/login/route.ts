@@ -1,5 +1,6 @@
 // app/api/auth/login/route.ts
 import { NextRequest, NextResponse } from 'next/server';
+import { checkRateLimit } from '@/lib/security';
 
 interface LoginRequest {
   email: string;
@@ -25,19 +26,34 @@ interface FirebaseUser {
 
 export async function POST(req: NextRequest) {
   try {
-    const body: LoginRequest = await req.json();
-    const { email, password, recaptchaToken } = body;
+    const ip =
+      req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
+      req.headers.get('x-real-ip') ||
+      'unknown';
 
-    // Validate input
-    if (!email || !password || !recaptchaToken) {
+    const limit = checkRateLimit(`login:${ip}`, 10, 60_000);
+    if (!limit.allowed) {
       return NextResponse.json(
-        { message: 'Missing required fields' },
-        { status: 400 }
+        { message: 'Too many login attempts. Please try again shortly.' },
+        { status: 429, headers: { 'Retry-After': String(limit.retryAfterSec) } }
       );
     }
 
-    // Verify reCAPTCHA token with Google
-    const recaptchaResponse = await verifyRecaptcha(recaptchaToken);
+    const body: LoginRequest = await req.json();
+    const { email, password, recaptchaToken } = body;
+
+    if (
+      typeof email !== 'string' ||
+      typeof password !== 'string' ||
+      typeof recaptchaToken !== 'string' ||
+      !email.trim() ||
+      !password ||
+      !recaptchaToken.trim()
+    ) {
+      return NextResponse.json({ message: 'Missing required fields' }, { status: 400 });
+    }
+
+    const recaptchaResponse = await verifyRecaptcha(recaptchaToken.trim());
 
     if (!recaptchaResponse.success) {
       return NextResponse.json(
@@ -46,21 +62,15 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Verify user credentials with Firebase REST API
-    const firebaseUser = await verifyUserWithFirebase(email, password);
+    const firebaseUser = await verifyUserWithFirebase(email.trim(), password);
 
     if (!firebaseUser) {
-      return NextResponse.json(
-        { message: 'Invalid email or password' },
-        { status: 401 }
-      );
+      return NextResponse.json({ message: 'Invalid email or password' }, { status: 401 });
     }
 
-    // Return user data with ID token for client-side authentication
     return NextResponse.json(
       {
         message: 'Login successful',
-        idToken: firebaseUser.idToken,
         user: {
           uid: firebaseUser.localId,
           email: firebaseUser.email,
@@ -86,19 +96,20 @@ async function verifyRecaptcha(token: string): Promise<RecaptchaResponse> {
       throw new Error('RECAPTCHA_SECRET_KEY is not set');
     }
 
-    const response = await fetch(
-      'https://www.google.com/recaptcha/api/siteverify',
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: `secret=${secretKey}&response=${token}`,
-      }
-    );
+    const params = new URLSearchParams({
+      secret: secretKey,
+      response: token,
+    });
+
+    const response = await fetch('https://www.google.com/recaptcha/api/siteverify', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: params.toString(),
+    });
 
     const data: RecaptchaResponse = await response.json();
-
     return data;
   } catch (error) {
     console.error('reCAPTCHA verification error:', error);
@@ -112,13 +123,13 @@ async function verifyUserWithFirebase(
 ): Promise<FirebaseUser | null> {
   try {
     const apiKey = process.env.NEXT_PUBLIC_FIREBASE_API_KEY;
-    
+
     if (!apiKey) {
       throw new Error('FIREBASE_API_KEY is not set');
     }
 
     const response = await fetch(
-      `https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${apiKey}`,
+      `https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${encodeURIComponent(apiKey)}`,
       {
         method: 'POST',
         headers: {
@@ -134,13 +145,8 @@ async function verifyUserWithFirebase(
 
     const data = await response.json();
 
-    // Check if the response contains a valid user (idToken)
     if (data.idToken) {
-      return data; // Returns idToken, localId, email, displayName, etc.
-    }
-
-    if (data.error) {
-      console.error('Firebase error:', data.error.message);
+      return data;
     }
 
     return null;

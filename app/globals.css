@@ -10,19 +10,19 @@
   --card-foreground: 222.2 84% 4.9%;
   --popover: 0 0% 100%;
   --popover-foreground: 222.2 84% 4.9%;
-  --primary: 221.2 83.2% 53.3%;
-  --primary-foreground: 210 40% 98%;
-  --secondary: 210 40% 96.1%;
-  --secondary-foreground: 222.2 47.4% 11.2%;
-  --muted: 210 40% 96.1%;
-  --muted-foreground: 215.4 16.3% 46.9%;
-  --accent: 210 40% 96.1%;
-  --accent-foreground: 222.2 47.4% 11.2%;
+  --primary: 253 57% 25%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 40 37% 95%;
+  --secondary-foreground: 253 57% 25%;
+  --muted: 210 20% 96%;
+  --muted-foreground: 215 14% 42%;
+  --accent: 40 37% 47%;
+  --accent-foreground: 0 0% 100%;
   --destructive: 0 84.2% 60.2%;
   --destructive-foreground: 210 40% 98%;
-  --border: 214.3 31.8% 91.4%;
-  --input: 214.3 31.8% 91.4%;
-  --ring: 221.2 83.2% 53.3%;
+  --border: 220 14% 90%;
+  --input: 220 14% 90%;
+  --ring: 253 57% 25%;
   --radius: 0.5rem;
 }
 
@@ -57,6 +57,32 @@ body {
   background-color: hsl(var(--background));
   color: hsl(var(--foreground));
   font-feature-settings: "rlig" 1, "calt" 1;
+}
+
+@layer base {
+  .material-symbols-outlined {
+    font-family: 'Material Symbols Outlined';
+    font-weight: normal;
+    font-style: normal;
+    font-size: 20px;
+    line-height: 1;
+    letter-spacing: normal;
+    text-transform: none;
+    white-space: nowrap;
+    word-wrap: normal;
+    direction: ltr;
+    -webkit-font-feature-settings: 'liga';
+    font-feature-settings: 'liga';
+    -webkit-font-smoothing: antialiased;
+  }
+}
+
+/* Admin workspace: strictly Figtree 400 only (preserving Material Symbols icons) */
+.admin-workspace,
+.admin-workspace *:not(.material-symbols-outlined),
+body.admin-figtree-only *:not(.material-symbols-outlined) {
+  font-family: var(--font-figtree), system-ui, sans-serif !important;
+  font-weight: 400 !important;
 }
 
 /* Custom scrollbar */

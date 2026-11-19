@@ -3,9 +3,8 @@
 
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Users, Sparkles, Target, HeartHandshake } from 'lucide-react';
+import { Icon } from '@/components/ui/icon';
 import { Button } from '@/components/ui/button';
-import { ArrowRight } from 'lucide-react';
 
 interface HeaderProps {
   currentStep?: number;
@@ -42,7 +41,7 @@ const Header: React.FC<HeaderProps> = ({
           className="absolute top-8 left-8 hidden lg:block"
         >
           <div className="p-3 bg-white/20 backdrop-blur-sm rounded-2xl">
-            <Users className="w-8 h-8 text-white" />
+            <Icon name="groups" className="w-8 h-8 text-white" />
           </div>
         </motion.div>
 
@@ -60,7 +59,7 @@ const Header: React.FC<HeaderProps> = ({
           className="absolute bottom-8 right-8 hidden lg:block"
         >
           <div className="p-3 bg-white/20 backdrop-blur-sm rounded-2xl">
-            <HeartHandshake className="w-8 h-8 text-white" />
+            <Icon name="volunteer_activism" className="w-8 h-8 text-white" />
           </div>
         </motion.div>
 
@@ -73,7 +72,7 @@ const Header: React.FC<HeaderProps> = ({
               transition={{ duration: 0.5 }}
               className="inline-flex items-center gap-2 px-4 py-2 bg-white/20 backdrop-blur-sm rounded-full mb-6"
             >
-              <Sparkles className="w-4 h-4 text-yellow-300" />
+              <Icon name="auto_awesome" className="w-4 h-4 text-yellow-300" />
               <span className="text-sm font-medium text-white">
                 Join 5000+ Successful Alumni
               </span>
@@ -145,7 +144,7 @@ const Header: React.FC<HeaderProps> = ({
                 className="bg-white text-blue-600 hover:bg-blue-50 font-semibold px-8 py-6 text-lg rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300"
               >
                 Start Registration
-                <ArrowRight className="ml-2 h-5 w-5" />
+                <Icon name="arrow_forward" className="ml-2 h-5 w-5" />
               </Button>
               <Button
                 size="lg"
@@ -272,7 +271,7 @@ const Header: React.FC<HeaderProps> = ({
         <div className="grid md:grid-cols-3 gap-6">
           <div className="bg-gradient-to-br from-blue-50 to-white p-6 rounded-2xl shadow-lg border border-blue-100 hover:shadow-xl transition-shadow duration-300">
             <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center mb-4">
-              <Users className="w-6 h-6 text-blue-600" />
+              <Icon name="groups" className="w-6 h-6 text-blue-600" />
             </div>
             <h3 className="text-xl font-bold text-gray-800 mb-2">Network & Connect</h3>
             <p className="text-gray-600">
@@ -283,7 +282,7 @@ const Header: React.FC<HeaderProps> = ({
 
           <div className="bg-gradient-to-br from-purple-50 to-white p-6 rounded-2xl shadow-lg border border-purple-100 hover:shadow-xl transition-shadow duration-300">
             <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center mb-4">
-              <Target className="w-6 h-6 text-purple-600" />
+              <Icon name="track_changes" className="w-6 h-6 text-purple-600" />
             </div>
             <h3 className="text-xl font-bold text-gray-800 mb-2">Career Growth</h3>
             <p className="text-gray-600">
@@ -294,7 +293,7 @@ const Header: React.FC<HeaderProps> = ({
 
           <div className="bg-gradient-to-br from-green-50 to-white p-6 rounded-2xl shadow-lg border border-green-100 hover:shadow-xl transition-shadow duration-300">
             <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center mb-4">
-              <HeartHandshake className="w-6 h-6 text-green-600" />
+              <Icon name="volunteer_activism" className="w-6 h-6 text-green-600" />
             </div>
             <h3 className="text-xl font-bold text-gray-800 mb-2">Give Back</h3>
             <p className="text-gray-600">

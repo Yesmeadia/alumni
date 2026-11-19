@@ -78,6 +78,7 @@ const config: Config = {
       },
       fontFamily: {
         sans: ["var(--font-figtree)", "system-ui", "sans-serif"],
+        display: ["var(--font-funnel-display)", "var(--font-figtree)", "sans-serif"],
       },
     },
   },

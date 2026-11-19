@@ -3,7 +3,7 @@
 
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Loader2 } from 'lucide-react';
+import { Icon } from '@/components/ui/icon';
 
 const LoadingSpinner: React.FC = () => {
   return (
@@ -14,7 +14,7 @@ const LoadingSpinner: React.FC = () => {
         className="text-center"
       >
         <div className="relative">
-          <Loader2 className="h-16 w-16 animate-spin text-blue-600 mx-auto mb-4" />
+          <Icon name="progress_activity" className="h-16 w-16 animate-spin text-blue-600 mx-auto mb-4" />
           <div className="absolute inset-0 h-16 w-16 mx-auto rounded-full bg-blue-400 opacity-20 animate-ping" />
         </div>
         <p className="text-gray-600 font-medium text-lg">Loading dashboard...</p>

@@ -23,7 +23,7 @@ import {
 } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { AlumniData } from '@/lib/types';
-import { Loader2, User, GraduationCap, Briefcase, Share2, Save, X } from 'lucide-react';
+import { Icon } from '@/components/ui/icon';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface EditAlumniDialogProps {
@@ -85,7 +85,7 @@ const EditAlumniDialog: React.FC<EditAlumniDialogProps> = ({
                 <DialogHeader className="px-8 py-6 border-b border-slate-100 bg-slate-50/50">
                     <div className="flex items-center gap-4">
                         <div className="h-10 w-10 bg-indigo-600 rounded-lg flex items-center justify-center shadow-sm">
-                            <Save className="h-5 w-5 text-white" />
+                            <Icon name="save" className="h-5 w-5 text-white" />
                         </div>
                         <div>
                             <DialogTitle className="text-lg font-bold text-slate-900">Edit Alumni Profile</DialogTitle>
@@ -101,16 +101,16 @@ const EditAlumniDialog: React.FC<EditAlumniDialogProps> = ({
                         <div className="px-8 py-4 bg-white border-b border-slate-100">
                             <TabsList className="bg-slate-100 p-1 rounded-lg w-full grid grid-cols-4 h-11">
                                 <TabsTrigger value="personal" className="rounded-md data-[state=active]:bg-white data-[state=active]:text-indigo-600 data-[state=active]:shadow-sm font-bold text-xs flex items-center gap-2">
-                                    <User className="h-3.5 w-3.5" /> <span className="hidden sm:inline">Personal</span>
+                                    <Icon name="person" className="h-3.5 w-3.5" /> <span className="hidden sm:inline">Personal</span>
                                 </TabsTrigger>
                                 <TabsTrigger value="education" className="rounded-md data-[state=active]:bg-white data-[state=active]:text-indigo-600 data-[state=active]:shadow-sm font-bold text-xs flex items-center gap-2">
-                                    <GraduationCap className="h-3.5 w-3.5" /> <span className="hidden sm:inline">Education</span>
+                                    <Icon name="school" className="h-3.5 w-3.5" /> <span className="hidden sm:inline">Education</span>
                                 </TabsTrigger>
                                 <TabsTrigger value="professional" className="rounded-md data-[state=active]:bg-white data-[state=active]:text-indigo-600 data-[state=active]:shadow-sm font-bold text-xs flex items-center gap-2">
-                                    <Briefcase className="h-3.5 w-3.5" /> <span className="hidden sm:inline">Career</span>
+                                    <Icon name="work" className="h-3.5 w-3.5" /> <span className="hidden sm:inline">Career</span>
                                 </TabsTrigger>
                                 <TabsTrigger value="social" className="rounded-md data-[state=active]:bg-white data-[state=active]:text-indigo-600 data-[state=active]:shadow-sm font-bold text-xs flex items-center gap-2">
-                                    <Share2 className="h-3.5 w-3.5" /> <span className="hidden sm:inline">Social</span>
+                                    <Icon name="share" className="h-3.5 w-3.5" /> <span className="hidden sm:inline">Social</span>
                                 </TabsTrigger>
                             </TabsList>
                         </div>
@@ -227,7 +227,7 @@ const EditAlumniDialog: React.FC<EditAlumniDialogProps> = ({
                             disabled={loading}
                             className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg h-10 px-8 font-bold shadow-sm transition-all"
                         >
-                            {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                            {loading ? <Icon name="progress_activity" className="mr-2 h-4 w-4 animate-spin" /> : <Icon name="save" className="mr-2 h-4 w-4" />}
                             Update Record
                         </Button>
                     </DialogFooter>

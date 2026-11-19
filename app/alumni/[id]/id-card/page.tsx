@@ -6,7 +6,7 @@ import { ref, onValue } from 'firebase/database';
 import { database } from '@/lib/firebase';
 import { AlumniData } from '@/lib/types';
 import { Button } from '@/components/ui/button';
-import { Printer, ArrowLeft, Loader2 } from 'lucide-react';
+import { Icon } from '@/components/ui/icon';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 export default function AlumniIDCardPage() {
@@ -29,7 +29,7 @@ export default function AlumniIDCardPage() {
 
     if (loading) return (
         <div className="min-h-screen flex items-center justify-center bg-white">
-            <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+            <Icon name="progress_activity" className="h-8 w-8 animate-spin text-gray-400" />
         </div>
     );
 
@@ -99,11 +99,11 @@ export default function AlumniIDCardPage() {
             <div className="no-print mb-10 flex justify-between items-center" style={{ width: '220px' }}>
                 <Button variant="ghost" onClick={() => router.back()}
                     className="gap-2 font-semibold text-gray-500 hover:text-gray-900 rounded-xl text-sm">
-                    <ArrowLeft className="h-4 w-4" /> Back
+                    <Icon name="arrow_back" className="h-4 w-4" /> Back
                 </Button>
                 <Button onClick={() => window.print()}
                     className="bg-gray-900 hover:bg-gray-800 text-white rounded-xl gap-2 font-semibold px-5 text-sm">
-                    <Printer className="h-3.5 w-3.5" /> Print
+                    <Icon name="print" className="h-3.5 w-3.5" /> Print
                 </Button>
             </div>
 
