@@ -6,6 +6,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { ref, onValue, update } from 'firebase/database';
 import { database } from '@/lib/firebase';
 import { AlumniData } from '@/lib/types';
+import { sanitizeText, sanitizeMultilineText } from '@/lib/security';
 
 
 
@@ -35,15 +36,26 @@ export default function EditAlumniPage() {
     const [activeTab, setActiveTab] = useState('personal');
 
     useEffect(() => {
-        if (!id) return;
-        const alumniRef = ref(database, `alumni/${id}`);
-        const unsubscribe = onValue(alumniRef, (snapshot) => {
-            const data = snapshot.val();
-            if (data) {
-                setFormData(data);
-            }
+        const safeId = typeof id === 'string' ? id.trim() : '';
+        if (!safeId || safeId.includes('/') || safeId.includes('..')) {
             setLoading(false);
-        });
+            return;
+        }
+        const alumniRef = ref(database, `alumni/${safeId}`);
+        const unsubscribe = onValue(
+            alumniRef,
+            (snapshot) => {
+                const data = snapshot.val();
+                if (data) {
+                    const { id: _ignored, ...rest } = data as AlumniData;
+                    setFormData(rest);
+                }
+                setLoading(false);
+            },
+            () => {
+                setLoading(false);
+            }
+        );
         return () => unsubscribe();
     }, [id]);
 
@@ -63,10 +75,29 @@ export default function EditAlumniPage() {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        const safeId = typeof id === 'string' ? id.trim() : '';
+        if (!safeId || safeId.includes('/') || safeId.includes('..')) {
+            alert('Invalid alumni record ID');
+            return;
+        }
         setSaving(true);
         try {
-            await update(ref(database, `alumni/${id}`), {
-                ...formData,
+            const { id: _ignored, ...raw } = formData as any;
+            const sanitized: Record<string, any> = {};
+            Object.entries(raw).forEach(([key, val]) => {
+                if (typeof val === 'string') {
+                    sanitized[key] =
+                        key === 'address' || key === 'messageToTeacher' || key === 'professionalInterests'
+                            ? sanitizeMultilineText(val, 1500)
+                            : sanitizeText(val, 300);
+                } else if (Array.isArray(val)) {
+                    sanitized[key] = val.map((v) => sanitizeText(v, 80)).filter(Boolean);
+                } else if (typeof val === 'number' || typeof val === 'boolean') {
+                    sanitized[key] = val;
+                }
+            });
+            await update(ref(database, `alumni/${safeId}`), {
+                ...sanitized,
                 updatedAt: Date.now()
             });
             router.back();
@@ -99,11 +130,11 @@ export default function EditAlumniPage() {
                         <div className="flex items-center justify-between mb-8">
                             <div className="flex items-center gap-4">
                                 <Button
-                                    variant="ghost"
+                                    variant="outline"
                                     onClick={() => router.back()}
-                                    className="rounded-xl h-12 w-12 p-0 hover:bg-white hover:shadow-md transition-all"
+                                    className="rounded-xl h-10 px-4 hover:bg-white transition-all"
                                 >
-                                    <Icon name="arrow_back" className="h-6 w-6" />
+                                    Back
                                 </Button>
                                 <div>
                                     <h1 className="text-3xl font-black text-slate-900 leading-none">Edit Alumni</h1>

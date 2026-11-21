@@ -73,7 +73,7 @@ export default function ForgotPasswordPage() {
         href="/login"
         className="font-medium text-gray-500 hover:text-[#2a1b63] transition-colors"
       >
-        &larr; Back to Sign In
+        Back to Sign In
       </Link>
       <Link href="/" className="font-medium text-gray-500 hover:text-[#2a1b63]">
         Home

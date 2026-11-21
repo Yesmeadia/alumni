@@ -79,7 +79,6 @@ export default function AlumniDetailsPage() {
           onClick={() => router.push('/dashboard/registrations')}
           className="h-10 px-5 rounded-xl bg-[#2a1b63] hover:bg-[#2a1b63]/90 text-white"
         >
-          <Icon name="arrow_back" className="text-[18px] mr-2" />
           Back to Registrations
         </Button>
       </div>
@@ -137,7 +136,6 @@ export default function AlumniDetailsPage() {
               variant="outline"
               className="h-10 px-4 rounded-xl border-[#E5E7EB] bg-white text-[#1D1E20] hover:bg-[#F3F0FA] hover:text-[#2a1b63]"
             >
-              <Icon name="arrow_back" className="text-[18px] mr-2" />
               Registrations
             </Button>
           </Link>

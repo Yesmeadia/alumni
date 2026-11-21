@@ -14,6 +14,7 @@ import {
 } from '@/components/ui/table';
 import { Icon } from '@/components/ui/icon';
 import { useAlumniData, AlumniRecord } from '@/hooks/useAlumniData';
+import { useJobApplications } from '@/hooks/useJobApplications';
 import StatsCard from './Dashboard/StatsCard';
 import AlumniTableRow from './Dashboard/AlumniTableRow';
 import AlumniDetailsDialog from './Dashboard/AlumniDetailsDialog';
@@ -28,6 +29,7 @@ export default function Dashboard() {
   const router = useRouter();
   const { alumniList, loading, stats, sortedSchools, sortedCompanies, updateAlumni, deleteAlumni } =
     useAlumniData();
+  const { applications: jobApplications, counts: jobCounts } = useJobApplications();
 
   const [selectedAlumni, setSelectedAlumni] = useState<any>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -103,7 +105,7 @@ export default function Dashboard() {
       </div>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5">
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-5">
         <StatsCard
           title="Total Alumni"
           value={stats.totalAlumni}
@@ -115,12 +117,22 @@ export default function Dashboard() {
           onClick={() => router.push('/dashboard/registrations')}
         />
         <StatsCard
+          title="Job Applications"
+          value={jobCounts.total}
+          icon={<Icon name="work" />}
+          description={`${jobCounts.pending} pending review`}
+          badge={jobCounts.shortlisted > 0 ? `${jobCounts.shortlisted} shortlisted` : undefined}
+          color="indigo"
+          index={1}
+          onClick={() => router.push('/dashboard/job-applications')}
+        />
+        <StatsCard
           title="Institutions"
           value={stats.totalSchools}
           icon={<Icon name="school" />}
           description="YES INDIA schools represented"
           color="blue"
-          index={1}
+          index={2}
           onClick={() => router.push('/dashboard/institutions')}
         />
         <StatsCard
@@ -129,7 +141,7 @@ export default function Dashboard() {
           icon={<Icon name="business_center" />}
           description="Active organizations"
           color="amber"
-          index={2}
+          index={3}
           onClick={() => router.push('/dashboard/employers')}
         />
         <StatsCard
@@ -139,7 +151,7 @@ export default function Dashboard() {
           description="New alumni joined"
           badge="30d"
           color="green"
-          index={3}
+          index={4}
           onClick={() => router.push('/dashboard/registrations')}
         />
       </div>
@@ -155,7 +167,7 @@ export default function Dashboard() {
               </CardDescription>
             </div>
             <Link href="/dashboard/institutions" className="text-xs text-[#2a1b63] hover:underline">
-              View all &rarr;
+              View all
             </Link>
           </CardHeader>
           <CardContent className="p-4 space-y-2">
@@ -183,7 +195,7 @@ export default function Dashboard() {
               </CardDescription>
             </div>
             <Link href="/dashboard/employers" className="text-xs text-[#2a1b63] hover:underline">
-              View all &rarr;
+              View all
             </Link>
           </CardHeader>
           <CardContent className="p-4 space-y-2">
@@ -219,7 +231,7 @@ export default function Dashboard() {
               size="sm"
               className="rounded-xl text-xs border-[#E5E7EB] text-[#2a1b63] hover:bg-[#F3F0FA]"
             >
-              View All &rarr;
+              View All
             </Button>
           </Link>
         </CardHeader>
@@ -251,7 +263,7 @@ export default function Dashboard() {
               {alumniList.slice(0, 8).map((alumni, idx) => (
                 <AlumniTableRow
                   key={alumni.id}
-                  alumni={{ id: alumni.id, ...alumni.data }}
+                  alumni={{ ...alumni.data, id: alumni.id }}
                   index={idx}
                   onClick={() => handleViewDetails(alumni)}
                   onEdit={handleEditAlumni}
@@ -261,6 +273,58 @@ export default function Dashboard() {
             </TableBody>
           </Table>
         </div>
+      </Card>
+
+      {/* Recent Job Applications */}
+      <Card className={saasCardClass}>
+        <CardHeader className="px-6 py-5 border-b border-[#E5E7EB] flex flex-row items-center justify-between">
+          <div>
+            <CardTitle className="text-base text-[#1D1E20]">Recent Job Applications</CardTitle>
+            <CardDescription className="text-xs text-[#8A8F98]">
+              Latest career applications submitted by registered alumni
+            </CardDescription>
+          </div>
+          <Link href="/dashboard/job-applications">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="rounded-xl text-xs border-[#E5E7EB] text-[#2a1b63] hover:bg-[#F3F0FA]"
+            >
+              View All
+            </Button>
+          </Link>
+        </CardHeader>
+        <CardContent className="p-4">
+          {jobApplications.length === 0 ? (
+            <div className="py-8 text-center text-xs text-[#8A8F98]">
+              No job applications submitted yet.
+            </div>
+          ) : (
+            <div className="divide-y divide-[#E5E7EB]/70">
+              {jobApplications.slice(0, 5).map(({ id, data }) => (
+                <Link
+                  key={id}
+                  href="/dashboard/job-applications"
+                  className="py-3 px-2 flex flex-col sm:flex-row sm:items-center justify-between gap-2 hover:bg-[#FAFBFF] rounded-xl transition-colors"
+                >
+                  <div className="min-w-0">
+                    <p className="text-sm text-[#1D1E20] truncate">
+                      {data.fullName} · <span className="text-[#2a1b63]">{data.positionApplied}</span>
+                    </p>
+                    <p className="text-xs text-[#8A8F98] truncate mt-0.5">
+                      {data.preferredLocation || '—'} · {data.jobType}
+                      {data.willingForAbroad === 'Yes' ? ' · Abroad OK' : ''}
+                    </p>
+                  </div>
+                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs bg-[#F3F0FA] text-[#2a1b63] border border-[#DDD6F3] capitalize self-start sm:self-center shrink-0">
+                    {data.status || 'pending'}
+                  </span>
+                </Link>
+              ))}
+            </div>
+          )}
+        </CardContent>
       </Card>
 
       {/* Modals */}

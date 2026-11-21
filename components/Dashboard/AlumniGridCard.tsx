@@ -42,7 +42,7 @@ const AlumniGridCard: React.FC<AlumniGridCardProps> = ({ alumni, onClick }) => {
             {alumni.yearOfGraduation || 'N/A'}
           </span>
           <span className="font-semibold text-gray-500 group-hover:text-[#2a1b63] transition-colors">
-            View &rarr;
+            View
           </span>
         </div>
       </CardContent>

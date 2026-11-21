@@ -1,0 +1,38 @@
+{
+  "rules": {
+    "alumni": {
+      ".read": true,
+      "$alumniId": {
+        ".write": "(!data.exists() && newData.exists()) || auth != null",
+        ".validate": "!newData.exists() || newData.hasChildren(['fullName', 'mobileNumber', 'schoolAttended'])"
+      }
+    },
+    "deletedAlumni": {
+      ".read": "auth != null",
+      "$alumniId": {
+        ".write": "auth != null"
+      }
+    },
+    "jobApplications": {
+      ".read": "auth != null",
+      "$applicationId": {
+        ".write": "(!data.exists() && newData.exists()) || auth != null",
+        ".validate": "!newData.exists() || newData.hasChildren(['alumniId', 'fullName', 'mobileNumber', 'positionApplied'])"
+      }
+    },
+    "deletedJobApplications": {
+      ".read": "auth != null",
+      "$applicationId": {
+        ".write": "auth != null"
+      }
+    },
+    "applications": {
+      ".read": true,
+      ".write": true
+    },
+    "jobs": {
+      ".read": true,
+      ".write": true
+    }
+  }
+}

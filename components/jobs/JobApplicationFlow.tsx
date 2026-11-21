@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
+import { useLenis } from 'lenis/react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -22,6 +23,13 @@ import {
   NOTICE_PERIOD_OPTIONS,
 } from '@/lib/types';
 import { lookupRegisteredAlumni, submitJobApplication } from '@/lib/firebaseService';
+import { validateResumeMagicBytes } from '@/lib/security';
+
+const ALLOWED_RESUME_MIMES = new Set([
+  'application/pdf',
+  'application/msword',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+]);
 
 interface VerifiedAlumni {
   id: string;
@@ -54,6 +62,31 @@ export default function JobApplicationFlow() {
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
   const [submittedId, setSubmittedId] = useState<string | null>(null);
+
+  const isFirstRender = useRef(true);
+  const lenis = useLenis();
+
+  const scrollToTop = useCallback(() => {
+    const run = () => {
+      if (lenis) {
+        lenis.scrollTo(0, { immediate: true, force: true });
+      }
+      window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+    };
+    run();
+    requestAnimationFrame(run);
+    setTimeout(run, 120);
+  }, [lenis]);
+
+  useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
+    scrollToTop();
+  }, [selectedAlumni, submittedId, scrollToTop]);
 
   const handleLookup = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -91,14 +124,29 @@ export default function JobApplicationFlow() {
     setSubmitError('');
   };
 
-  const handleResumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleResumeChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] || null;
     if (!file) {
       setResumeFile(null);
       return;
     }
-    if (file.size > 5 * 1024 * 1024) {
+    if (file.size <= 0 || file.size > 5 * 1024 * 1024) {
       setSubmitError('Resume file must be 5MB or smaller.');
+      setResumeFile(null);
+      e.target.value = '';
+      return;
+    }
+    if (!ALLOWED_RESUME_MIMES.has(file.type)) {
+      setSubmitError('Only PDF, DOC, and DOCX resume files are allowed.');
+      setResumeFile(null);
+      e.target.value = '';
+      return;
+    }
+    const validBytes = await validateResumeMagicBytes(file);
+    if (!validBytes) {
+      setSubmitError('Invalid resume file content. Please upload a valid PDF, DOC, or DOCX document.');
+      setResumeFile(null);
+      e.target.value = '';
       return;
     }
     setSubmitError('');
@@ -587,27 +635,6 @@ export default function JobApplicationFlow() {
                     className="h-11 rounded-xl border-gray-300"
                     required
                   />
-                  <div className="pt-1.5 flex items-center justify-between gap-3 rounded-xl border border-gray-200 bg-[#faf9f6] px-3.5 py-2.5">
-                    <span className="text-xs text-gray-700 flex items-center gap-1.5">
-                      <Icon name="public" className="text-[16px] text-[#2a1b63]" />
-                      Are you willing to work abroad?
-                    </span>
-                    <div className="inline-flex items-center gap-1.5 shrink-0">
-                      {(['Yes', 'No'] as const).map((option) => (
-                        <button
-                          key={option}
-                          type="button"
-                          onClick={() => setWillingForAbroad(option)}
-                          className={`px-3 py-1 rounded-lg text-xs border transition-colors cursor-pointer ${willingForAbroad === option
-                            ? 'bg-[#2a1b63] text-white border-[#2a1b63]'
-                            : 'bg-white text-gray-600 border-gray-300 hover:bg-[#F3F0FA] hover:text-[#2a1b63]'
-                            }`}
-                        >
-                          {option}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
                 </div>
 
                 <div className="space-y-2">
@@ -620,6 +647,28 @@ export default function JobApplicationFlow() {
                     onChange={(e) => setExperienceYears(e.target.value)}
                     className="h-11 rounded-xl border-gray-300"
                   />
+                </div>
+
+                <div className="sm:col-span-2 flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-xl border border-gray-200 bg-[#faf9f6] px-4 py-3.5">
+                  <span className="text-sm text-gray-700 leading-snug">
+                    Would you be interested in exploring job opportunities abroad facilitated by the YES India Foundation?
+                  </span>
+                  <div className="inline-flex items-center gap-2 shrink-0 self-start sm:self-center">
+                    {(['Yes', 'No'] as const).map((option) => (
+                      <button
+                        key={option}
+                        type="button"
+                        onClick={() => setWillingForAbroad(option)}
+                        className={`px-4 py-1.5 rounded-lg text-sm border transition-colors cursor-pointer ${
+                          willingForAbroad === option
+                            ? 'bg-[#2a1b63] text-white border-[#2a1b63]'
+                            : 'bg-white text-gray-600 border-gray-300 hover:bg-[#F3F0FA] hover:text-[#2a1b63]'
+                        }`}
+                      >
+                        {option}
+                      </button>
+                    ))}
+                  </div>
                 </div>
 
                 <div className="space-y-2">

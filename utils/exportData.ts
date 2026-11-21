@@ -71,6 +71,7 @@ const EXPORT_COLUMNS: {
     width: 16,
     getValue: (a) => (a.registrationDate ? new Date(a.registrationDate).toLocaleDateString() : ''),
   },
+  { header: 'Photo URL', width: 36, getValue: (a) => a.photoURL || '' },
   { header: 'ID', width: 22, getValue: (a) => a.id },
 ];
 

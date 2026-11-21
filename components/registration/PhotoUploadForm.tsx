@@ -2,6 +2,9 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Icon } from '@/components/ui/icon';
 import { toast } from 'sonner';
+import { validateImageMagicBytes } from '@/lib/security';
+
+const ALLOWED_IMAGE_MIMES = new Set(['image/jpeg', 'image/png', 'image/webp']);
 
 interface PhotoUploadFormProps {
   imageFile: File | null;
@@ -13,25 +16,34 @@ const PhotoUploadForm: React.FC<PhotoUploadFormProps> = ({
   imagePreview,
   onImageChange,
 }) => {
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      if (file.size > 5 * 1024 * 1024) {
-        toast.error('Image size should be less than 5MB');
-        return;
-      }
+    if (!file) return;
 
-      if (!file.type.startsWith('image/')) {
-        toast.error('Please upload a valid image file (PNG, JPG, JPEG)');
-        return;
-      }
-
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        onImageChange(file, reader.result as string);
-      };
-      reader.readAsDataURL(file);
+    if (file.size <= 0 || file.size > 5 * 1024 * 1024) {
+      toast.error('Image size should be less than 5MB');
+      e.target.value = '';
+      return;
     }
+
+    if (!ALLOWED_IMAGE_MIMES.has(file.type)) {
+      toast.error('Only PNG, JPG, JPEG, and WebP images are allowed');
+      e.target.value = '';
+      return;
+    }
+
+    const validBytes = await validateImageMagicBytes(file);
+    if (!validBytes) {
+      toast.error('Invalid image file. Please select a genuine PNG, JPG, or WebP photo.');
+      e.target.value = '';
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      onImageChange(file, reader.result as string);
+    };
+    reader.readAsDataURL(file);
   };
 
   const removeImage = () => {
@@ -51,11 +63,11 @@ const PhotoUploadForm: React.FC<PhotoUploadFormProps> = ({
         <div className="max-w-xl mx-auto space-y-4">
           <label
             htmlFor="photo-upload"
-            className="flex flex-col items-center justify-center w-full h-64 border-2 border-dashed border-gray-300 hover:border-[#2a1b63] rounded-2xl cursor-pointer bg-[#faf9f6] hover:bg-[#f7f4ed] transition-colors"
+            className="flex flex-col items-center justify-center w-full min-h-[220px] sm:h-64 p-4 border-2 border-dashed border-gray-300 hover:border-[#2a1b63] rounded-2xl cursor-pointer bg-[#faf9f6] hover:bg-[#f7f4ed] transition-colors"
           >
             {imagePreview ? (
-              <div className="relative p-4">
-                <div className="relative w-44 h-44 mx-auto">
+              <div className="relative p-2 sm:p-4">
+                <div className="relative w-36 h-36 sm:w-44 sm:h-44 mx-auto">
                   <img
                     src={imagePreview}
                     alt="Preview"
@@ -76,12 +88,12 @@ const PhotoUploadForm: React.FC<PhotoUploadFormProps> = ({
                 </div>
               </div>
             ) : (
-              <div className="flex flex-col items-center justify-center px-4 text-center">
-                <div className="w-14 h-14 mb-4 bg-[#2a1b63]/10 text-[#2a1b63] rounded-2xl flex items-center justify-center">
-                  <Icon name="upload" className="text-[28px]" />
+              <div className="flex flex-col items-center justify-center px-3 text-center">
+                <div className="w-12 h-12 sm:w-14 sm:h-14 mb-3 sm:mb-4 bg-[#2a1b63]/10 text-[#2a1b63] rounded-2xl flex items-center justify-center">
+                  <Icon name="upload" className="text-[26px] sm:text-[28px]" />
                 </div>
-                <p className="mb-1 text-base text-[#212529]">
-                  <span className="font-semibold text-[#2a1b63]">Click to upload</span> or drag
+                <p className="mb-1 text-sm sm:text-base text-[#212529]">
+                  <span className="font-semibold text-[#2a1b63]">Tap to upload</span> or drag
                   and drop
                 </p>
                 <p className="text-xs text-gray-500">PNG, JPG, JPEG (Max. 5MB)</p>
@@ -91,21 +103,19 @@ const PhotoUploadForm: React.FC<PhotoUploadFormProps> = ({
               id="photo-upload"
               type="file"
               className="hidden"
-              accept="image/*"
+              accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
               onChange={handleImageUpload}
             />
           </label>
 
-          {!imagePreview && (
-            <Button
-              type="button"
-              variant="outline"
-              className="w-full border-[#2a1b63] text-[#2a1b63] hover:bg-[#2a1b63]/5 rounded-lg"
-              onClick={() => document.getElementById('photo-upload')?.click()}
-            >
-              Choose Photo
-            </Button>
-          )}
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full h-11 border-[#2a1b63] text-[#2a1b63] hover:bg-[#2a1b63]/5 rounded-lg"
+            onClick={() => document.getElementById('photo-upload')?.click()}
+          >
+            {imagePreview ? 'Change Photo' : 'Choose Photo'}
+          </Button>
         </div>
       </div>
 

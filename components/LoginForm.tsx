@@ -245,7 +245,7 @@ export default function LoginForm() {
               href="/register"
               className="font-semibold text-[#2a1b63] hover:text-[#a5874c] transition-colors"
             >
-              Register as Alumni &rarr;
+              Register as Alumni
             </Link>
           </div>
         </div>

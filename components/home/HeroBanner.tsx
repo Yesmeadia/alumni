@@ -60,16 +60,15 @@ export default function HeroBanner() {
           <div className="flex flex-wrap items-center gap-3">
             <Link
               href="/register"
-              className="inline-flex items-center gap-2.5 px-7 py-3.5 bg-[#a5874c] hover:bg-[#93763e] text-white text-sm font-semibold rounded-lg transition-colors"
+              className="inline-flex items-center px-7 py-3.5 bg-[#a5874c] hover:bg-[#93763e] text-white text-sm font-semibold rounded-lg transition-colors"
             >
               <span>Register as Alumni</span>
-              <Icon name="arrow_forward" className="text-[18px]" />
             </Link>
             <Link
-              href="/login"
+              href="/jobs"
               className="inline-flex items-center px-6 py-3.5 bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/25 text-white text-sm font-semibold rounded-lg transition-colors"
             >
-              Member Sign In
+              Apply for Jobs
             </Link>
           </div>
         </div>
@@ -105,9 +104,8 @@ export default function HeroBanner() {
               type="button"
               aria-label={`Slide ${idx + 1}`}
               onClick={() => setIndex(idx)}
-              className={`h-1.5 rounded-full transition-all duration-300 ${
-                idx === index ? 'w-6 bg-[#a5874c]' : 'w-1.5 bg-white/50'
-              }`}
+              className={`h-1.5 rounded-full transition-all duration-300 ${idx === index ? 'w-6 bg-[#a5874c]' : 'w-1.5 bg-white/50'
+                }`}
             />
           ))}
         </div>

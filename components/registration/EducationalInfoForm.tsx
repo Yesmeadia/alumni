@@ -167,21 +167,28 @@ const EducationalInfoForm: React.FC<EducationalInfoFormProps> = ({
                 onValueChange={(value) => handleSelectChange('schoolAttended', value)}
                 disabled={isSchoolSelectDisabled}
               >
-                <SelectTrigger
-                  className={`${inputClass} h-auto min-h-[52px] py-2.5 [&>span]:block [&>span]:whitespace-normal [&>span]:w-full [&>span]:text-left [&>span]:leading-relaxed`}
-                >
+                <SelectTrigger className={`${inputClass} min-h-11 h-auto py-2.5 text-left`}>
                   <SelectValue placeholder={getSchoolPlaceholder()} />
                 </SelectTrigger>
-                <SelectContent className="max-w-[90vw] md:max-w-[600px] max-h-[360px] overflow-y-auto">
-                  {availableSchools.map((school) => (
-                    <SelectItem
-                      key={school}
-                      value={school}
-                      className="whitespace-normal py-3 leading-relaxed cursor-pointer"
-                    >
-                      <span className="block break-words">{school}</span>
-                    </SelectItem>
-                  ))}
+                <SelectContent
+                  position="popper"
+                  className="w-[var(--radix-select-trigger-width)] max-h-[320px] overflow-y-auto"
+                >
+                  {availableSchools.length === 0 ? (
+                    <div className="px-3 py-4 text-xs text-gray-500 text-center">
+                      No schools listed for the selected state/district.
+                    </div>
+                  ) : (
+                    availableSchools.map((school) => (
+                      <SelectItem
+                        key={school}
+                        value={school}
+                        className="whitespace-normal py-2.5 leading-snug cursor-pointer"
+                      >
+                        {school}
+                      </SelectItem>
+                    ))
+                  )}
                 </SelectContent>
               </Select>
               {isSchoolSelectDisabled && (

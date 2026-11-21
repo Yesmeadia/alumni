@@ -51,10 +51,9 @@ export default function CommunitySection() {
 
           <Link
             href="/register"
-            className="inline-flex items-center gap-2.5 absolute bottom-0 right-0 bg-[#2a1b63]/85 hover:bg-[#2a1b63] backdrop-blur-md text-white px-7 py-4 rounded-tl-[22px] text-sm font-medium transition-colors"
+            className="inline-flex items-center absolute bottom-0 right-0 bg-[#2a1b63]/85 hover:bg-[#2a1b63] backdrop-blur-md text-white px-7 py-4 rounded-tl-[22px] text-sm font-medium transition-colors"
           >
             <span>Register as Alumni</span>
-            <Icon name="arrow_forward" className="text-[18px]" />
           </Link>
         </div>
 

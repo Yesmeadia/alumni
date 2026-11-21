@@ -144,7 +144,6 @@ const Header: React.FC<HeaderProps> = ({
                 className="bg-white text-blue-600 hover:bg-blue-50 font-semibold px-8 py-6 text-lg rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300"
               >
                 Start Registration
-                <Icon name="arrow_forward" className="ml-2 h-5 w-5" />
               </Button>
               <Button
                 size="lg"

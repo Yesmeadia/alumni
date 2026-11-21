@@ -1,11 +1,23 @@
 // app/api/download-photo/route.ts
 import { NextRequest, NextResponse } from 'next/server';
-import { sanitizeFilename } from '@/lib/security';
+import { sanitizeFilename, checkRateLimit } from '@/lib/security';
 
 const ALLOWED_IMAGE_HOSTS = new Set(['firebasestorage.googleapis.com']);
 const MAX_IMAGE_BYTES = 10 * 1024 * 1024; // 10MB
 
 export async function GET(request: NextRequest) {
+  const ip =
+    request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
+    request.headers.get('x-real-ip') ||
+    'unknown';
+  const limit = checkRateLimit(`download-photo:${ip}`, 30, 60_000);
+  if (!limit.allowed) {
+    return new NextResponse('Too many requests', {
+      status: 429,
+      headers: { 'Retry-After': String(limit.retryAfterSec) },
+    });
+  }
+
   const { searchParams } = new URL(request.url);
   const rawUrl = searchParams.get('url');
   const rawFileName = searchParams.get('filename') || 'download.jpg';
@@ -21,12 +33,14 @@ export async function GET(request: NextRequest) {
     return new NextResponse('Invalid URL', { status: 400 });
   }
 
-  // Prevent SSRF: enforce HTTPS and strict Firebase Storage host allowlist
+  // Prevent SSRF & cross-bucket proxying: enforce HTTPS, Firebase Storage host, and project bucket
+  const projectBucket = process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET;
   if (
     parsedUrl.protocol !== 'https:' ||
     !ALLOWED_IMAGE_HOSTS.has(parsedUrl.hostname) ||
     parsedUrl.username ||
-    parsedUrl.password
+    parsedUrl.password ||
+    (projectBucket && !parsedUrl.pathname.startsWith(`/v0/b/${projectBucket}/o/`))
   ) {
     return new NextResponse('Forbidden image source', { status: 403 });
   }

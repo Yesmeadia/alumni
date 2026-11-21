@@ -1,11 +1,13 @@
 'use client';
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useLenis } from 'lenis/react';
 import { Button } from '@/components/ui/button';
 import { Icon } from '@/components/ui/icon';
 import { toast } from 'sonner';
-import { registerAlumni } from '@/lib/firebaseService';
+import { registerAlumni, checkDuplicateAlumni, submitJobApplication } from '@/lib/firebaseService';
 import { AlumniData } from '@/lib/types';
 import { REGISTRATION_STEPS } from '@/data/registration';
 import { SITE_CONFIG } from '@/data/site';
@@ -13,12 +15,15 @@ import PersonalInfoForm from './PInfoForm';
 import EducationalInfoForm from './EducationalInfoForm';
 import ProfessionalInfoForm from './ProfessionalInfoForm';
 import PhotoUploadForm from './PhotoUploadForm';
+import JobApplicationStep, { RegistrationJobFormData } from './JobApplicationStep';
 import InvolvementForm from './InvolvementForm';
 import PreviewPDF from './PreviewPDF';
 import SuccessMessage from './SuccessMessage';
 
 const INITIAL_FORM_DATA: Partial<AlumniData> = {
   fullName: '',
+  gender: '',
+  email: '',
   address: '',
   place: '',
   state: '',
@@ -50,12 +55,27 @@ const INITIAL_FORM_DATA: Partial<AlumniData> = {
 };
 
 const MultiStepRegistration = () => {
+  const router = useRouter();
   const [currentStep, setCurrentStep] = useState(1);
   const [loading, setLoading] = useState(false);
+  const [validatingStep, setValidatingStep] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [registrationId, setRegistrationId] = useState('');
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string>('');
+  const [applyForJob, setApplyForJob] = useState(false);
+  const [resumeFile, setResumeFile] = useState<File | null>(null);
+  const [jobFormData, setJobFormData] = useState<RegistrationJobFormData>({
+    positionApplied: '',
+    jobType: 'Full-time',
+    preferredLocation: '',
+    willingForAbroad: 'No',
+    experienceYears: '',
+    expectedSalary: '',
+    noticePeriod: 'Immediate',
+    skills: '',
+    coverNote: '',
+  });
   const [formData, setFormData] = useState<Partial<AlumniData>>(() => ({
     ...INITIAL_FORM_DATA,
     registrationDate: new Date().toISOString().split('T')[0],
@@ -63,14 +83,30 @@ const MultiStepRegistration = () => {
   }));
 
   const topRef = useRef<HTMLDivElement>(null);
+  const isFirstRender = useRef(true);
+  const lenis = useLenis();
 
-  const scrollToTop = () => {
-    if (topRef.current) {
-      topRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    } else {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+  const scrollToTop = useCallback(() => {
+    const run = () => {
+      if (lenis) {
+        lenis.scrollTo(0, { immediate: true, force: true });
+      }
+      window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+    };
+    run();
+    requestAnimationFrame(run);
+    setTimeout(run, 250);
+  }, [lenis]);
+
+  useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
     }
-  };
+    scrollToTop();
+  }, [currentStep, showSuccess, scrollToTop]);
 
   const handleFormDataChange = (data: Partial<AlumniData>) => {
     setFormData((prev) => ({ ...prev, ...data }));
@@ -81,38 +117,121 @@ const MultiStepRegistration = () => {
     setImagePreview(preview);
   };
 
-  const validateCurrentStep = (): boolean => {
-    if (currentStep !== 1) return true;
+  const validateCurrentStep = async (): Promise<boolean> => {
+    if (currentStep === 1) {
+      if (!formData.fullName?.trim() || formData.fullName.trim().length < 2) {
+        toast.error('Please enter your full name');
+        return false;
+      }
+      if (!formData.mobileNumber || !/^\d{10}$/.test(formData.mobileNumber.trim())) {
+        toast.error('Please enter a valid 10-digit mobile number');
+        return false;
+      }
+      if (
+        formData.email?.trim() &&
+        !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email.trim())
+      ) {
+        toast.error('Please enter a valid email address');
+        return false;
+      }
+      if (!formData.whatsappNumber || !/^\d{10}$/.test(formData.whatsappNumber.trim())) {
+        toast.error('Please enter a valid 10-digit WhatsApp number');
+        return false;
+      }
+      if (!formData.address?.trim()) {
+        toast.error('Please enter your address');
+        return false;
+      }
+      if (!formData.state) {
+        toast.error('Please select your state');
+        return false;
+      }
+      if (formData.state === 'Jammu and Kashmir' && !formData.district?.trim()) {
+        toast.error('Please select your district (required for Jammu & Kashmir)');
+        return false;
+      }
+      if (formData.pinCode?.trim() && !/^\d{6}$/.test(formData.pinCode.trim())) {
+        toast.error('Pin Code must be 6 digits');
+        return false;
+      }
 
-    if (!formData.fullName?.trim()) {
-      toast.error('Please enter your full name');
-      return false;
+      // Check for duplicate mobile number or email against existing registrations
+      setValidatingStep(true);
+      try {
+        const { duplicateMobile, duplicateEmail } = await checkDuplicateAlumni(
+          formData.mobileNumber,
+          formData.email
+        );
+        if (duplicateMobile && duplicateEmail) {
+          toast.error('This mobile number and email address are already registered.');
+          return false;
+        }
+        if (duplicateMobile) {
+          toast.error('This mobile number is already registered on the alumni portal.');
+          return false;
+        }
+        if (duplicateEmail) {
+          toast.error('This email address is already registered on the alumni portal.');
+          return false;
+        }
+      } catch {
+        // Proceed if lookup fails transiently; final submit checks again
+      } finally {
+        setValidatingStep(false);
+      }
+      return true;
     }
-    if (!formData.mobileNumber || !/^\d{10}$/.test(formData.mobileNumber)) {
-      toast.error('Please enter a valid 10-digit mobile number');
-      return false;
+
+    if (currentStep === 2) {
+      if (!formData.state) {
+        toast.error('Please select your state');
+        return false;
+      }
+      if (formData.state === 'Jammu and Kashmir' && !formData.district?.trim()) {
+        toast.error('Please select your district');
+        return false;
+      }
+      if (!formData.schoolAttended?.trim()) {
+        toast.error('Please select the school you attended');
+        return false;
+      }
+      if (!formData.yearOfGraduation?.trim()) {
+        toast.error('Please select your pass-out year');
+        return false;
+      }
+      if (!formData.lastClassAttended?.trim()) {
+        toast.error('Please select your last class attended');
+        return false;
+      }
+      if (formData.lastClassAttended === 'Other' && !formData.otherClass?.trim()) {
+        toast.error('Please specify your class name');
+        return false;
+      }
+      return true;
     }
-    if (!formData.whatsappNumber || !/^\d{10}$/.test(formData.whatsappNumber)) {
-      toast.error('Please enter a valid 10-digit WhatsApp number');
-      return false;
+
+    if (currentStep === 5 && applyForJob) {
+      if (!jobFormData.positionApplied.trim()) {
+        toast.error('Please enter the position / role you are applying for');
+        return false;
+      }
+      if (!jobFormData.preferredLocation.trim()) {
+        toast.error('Please enter your preferred work location');
+        return false;
+      }
+      if (!jobFormData.skills.trim()) {
+        toast.error('Please enter your key skills');
+        return false;
+      }
+      return true;
     }
-    if (!formData.address?.trim()) {
-      toast.error('Please enter your address');
-      return false;
-    }
-    if (!formData.state) {
-      toast.error('Please select your state');
-      return false;
-    }
-    if (formData.state === 'Jammu and Kashmir' && !formData.district?.trim()) {
-      toast.error('Please select your district (required for Jammu & Kashmir)');
-      return false;
-    }
+
     return true;
   };
 
-  const handleNext = () => {
-    if (!validateCurrentStep()) return;
+  const handleNext = async () => {
+    const ok = await validateCurrentStep();
+    if (!ok) return;
     setCurrentStep((prev) => Math.min(prev + 1, REGISTRATION_STEPS.length));
     scrollToTop();
   };
@@ -132,9 +251,10 @@ const MultiStepRegistration = () => {
   const handleFinalSubmit = async () => {
     setLoading(true);
     try {
-      const completeAlumniData: AlumniData = {
-        id: '',
+      const completeAlumniData: Omit<AlumniData, 'id'> = {
         fullName: formData.fullName || '',
+        gender: formData.gender || '',
+        email: formData.email || '',
         address: formData.address || '',
         place: formData.place || '',
         state: formData.state || '',
@@ -171,10 +291,44 @@ const MultiStepRegistration = () => {
       const result = await registerAlumni(completeAlumniData, imageFile);
 
       if (result.success) {
-        setRegistrationId(result.alumniId);
-        setShowSuccess(true);
-        scrollToTop();
+        if (applyForJob && result.alumniId) {
+          const jobResult = await submitJobApplication(
+            {
+              alumniId: result.alumniId,
+              fullName: completeAlumniData.fullName,
+              mobileNumber: completeAlumniData.mobileNumber,
+              whatsappNumber: completeAlumniData.whatsappNumber || '',
+              email: completeAlumniData.email || '',
+              schoolAttended: completeAlumniData.schoolAttended || '',
+              yearOfGraduation: completeAlumniData.yearOfGraduation || '',
+              qualification: completeAlumniData.qualification || '',
+              photoURL: result.photoURL || '',
+              positionApplied: jobFormData.positionApplied.trim(),
+              preferredLocation: jobFormData.preferredLocation.trim(),
+              willingForAbroad: jobFormData.willingForAbroad,
+              jobType: jobFormData.jobType,
+              experienceYears: jobFormData.experienceYears.trim() || 'Fresher',
+              expectedSalary: jobFormData.expectedSalary.trim(),
+              noticePeriod: jobFormData.noticePeriod,
+              skills: jobFormData.skills.trim(),
+              coverNote: jobFormData.coverNote.trim(),
+            },
+            resumeFile
+          );
+          if (!jobResult.success) {
+            toast.warning(
+              `Registration saved, but job application failed: ${jobResult.message}`
+            );
+          }
+        }
+
         toast.success(result.message || 'Registration submitted successfully!');
+        const query = new URLSearchParams();
+        if (result.alumniId) query.set('id', result.alumniId);
+        if (completeAlumniData.fullName) query.set('name', completeAlumniData.fullName);
+        if (completeAlumniData.schoolAttended) query.set('school', completeAlumniData.schoolAttended);
+        if (completeAlumniData.yearOfGraduation) query.set('batch', completeAlumniData.yearOfGraduation);
+        router.push(`/register/success?${query.toString()}`);
       } else {
         toast.error(result.message || 'Registration failed. Please try again.');
       }
@@ -221,9 +375,30 @@ const MultiStepRegistration = () => {
           />
         );
       case 5:
-        return <InvolvementForm formData={formData} onFormDataChange={handleFormDataChange} />;
+        return (
+          <JobApplicationStep
+            enabled={applyForJob}
+            onToggleEnabled={setApplyForJob}
+            jobData={jobFormData}
+            onJobDataChange={(data) =>
+              setJobFormData((prev) => ({ ...prev, ...data }))
+            }
+            resumeFile={resumeFile}
+            onResumeChange={setResumeFile}
+          />
+        );
       case 6:
-        return <PreviewPDF formData={formData} imagePreview={imagePreview} />;
+        return <InvolvementForm formData={formData} onFormDataChange={handleFormDataChange} />;
+      case 7:
+        return (
+          <PreviewPDF
+            formData={formData}
+            imagePreview={imagePreview}
+            applyForJob={applyForJob}
+            jobData={jobFormData}
+            resumeFile={resumeFile}
+          />
+        );
       default:
         return null;
     }
@@ -261,7 +436,7 @@ const MultiStepRegistration = () => {
       <div className="border-b border-gray-200 bg-[#faf9f6]">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Desktop Underline Tabs */}
-          <div className="hidden md:grid grid-cols-6 gap-2">
+          <div className="hidden md:grid grid-cols-7 gap-2">
             {REGISTRATION_STEPS.map((step) => {
               const isActive = currentStep === step.number;
               const isCompleted = currentStep > step.number;
@@ -272,10 +447,10 @@ const MultiStepRegistration = () => {
                   onClick={() => handleStepClick(step.number)}
                   disabled={currentStep < step.number}
                   className={`py-4 px-2 border-b-2 text-left transition-colors ${isActive
-                      ? 'border-[#2a1b63] text-[#2a1b63]'
-                      : isCompleted
-                        ? 'border-[#a5874c] text-[#212529] hover:text-[#2a1b63]'
-                        : 'border-transparent text-gray-400 cursor-not-allowed'
+                    ? 'border-[#2a1b63] text-[#2a1b63]'
+                    : isCompleted
+                      ? 'border-[#a5874c] text-[#212529] hover:text-[#2a1b63]'
+                      : 'border-transparent text-gray-400 cursor-not-allowed'
                     }`}
                 >
                   <div className="flex items-center justify-between text-[11px] font-mono font-bold mb-0.5">
@@ -333,7 +508,7 @@ const MultiStepRegistration = () => {
         </div>
 
         {/* Active Step Body */}
-        <AnimatePresence mode="wait">
+        <AnimatePresence mode="wait" onExitComplete={scrollToTop}>
           <motion.div
             key={currentStep}
             initial={{ opacity: 0, y: 10 }}
@@ -346,34 +521,41 @@ const MultiStepRegistration = () => {
         </AnimatePresence>
 
         {/* Clean Bottom Navigation */}
-        <div className="mt-10 pt-6 border-t border-gray-200 flex flex-col-reverse sm:flex-row items-center justify-between gap-3">
-          <Button
-            type="button"
-            onClick={handleBack}
-            disabled={currentStep === 1 || loading}
-            variant="outline"
-            className="w-full sm:w-auto border-gray-300 text-[#212529] hover:bg-gray-100 rounded-lg px-6"
-            style={{ visibility: currentStep === 1 ? 'hidden' : 'visible' }}
-          >
-            &larr; Previous
-          </Button>
+        <div className="mt-8 sm:mt-10 pt-6 border-t border-gray-200 flex flex-col-reverse sm:flex-row items-center justify-between gap-3">
+          {currentStep > 1 ? (
+            <Button
+              type="button"
+              onClick={handleBack}
+              disabled={loading}
+              variant="outline"
+              className="w-full sm:w-auto h-11 border-gray-300 text-[#212529] hover:bg-gray-100 rounded-lg px-6"
+            >
+              Previous
+            </Button>
+          ) : (
+            <div className="hidden sm:block" />
+          )}
 
           <div className="flex gap-3 w-full sm:w-auto">
-            {currentStep < 6 ? (
+            {currentStep < REGISTRATION_STEPS.length ? (
               <Button
                 type="button"
                 onClick={handleNext}
-                disabled={loading}
-                className="w-full sm:w-auto bg-[#2a1b63] hover:bg-[#1f134c] text-white rounded-lg px-8"
+                disabled={loading || validatingStep}
+                className="w-full sm:w-auto h-11 bg-[#2a1b63] hover:bg-[#1f134c] text-white rounded-lg px-8"
               >
-                {currentStep === 5 ? 'Review Application' : 'Continue'} &rarr;
+                {validatingStep
+                  ? 'Checking...'
+                  : currentStep === REGISTRATION_STEPS.length - 1
+                    ? 'Review Application'
+                    : 'Continue'}
               </Button>
             ) : (
               <Button
                 type="button"
                 onClick={handleFinalSubmit}
                 disabled={loading}
-                className="w-full sm:w-auto bg-[#a5874c] hover:bg-[#93763e] text-white rounded-lg px-8 font-semibold"
+                className="w-full sm:w-auto h-11 bg-[#a5874c] hover:bg-[#93763e] text-white rounded-lg px-8 font-semibold"
               >
                 {loading && (
                   <Icon name="progress_activity" className="mr-2 text-[18px] animate-spin" />

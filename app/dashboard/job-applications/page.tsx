@@ -20,6 +20,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Icon } from '@/components/ui/icon';
+import { isSafeFirebaseStorageUrl } from '@/lib/security';
 import {
   JOB_TYPE_OPTIONS,
   JobApplicationStatus,
@@ -56,6 +57,7 @@ export default function JobApplicationsPage() {
   const {
     applications,
     loading,
+    error,
     counts,
     updateApplicationStatus,
     deleteApplication,
@@ -152,7 +154,7 @@ export default function JobApplicationsPage() {
           </p>
         </div>
 
-        <Link href="/jobs" target="_blank">
+        <Link href="/jobs" target="_blank" rel="noopener noreferrer">
           <Button
             variant="outline"
             className="h-10 px-4 rounded-xl border-[#E5E7EB] bg-white text-[#1D1E20] hover:bg-[#F3F0FA] hover:text-[#2a1b63]"
@@ -162,6 +164,21 @@ export default function JobApplicationsPage() {
           </Button>
         </Link>
       </div>
+
+      {/* Error Notice (e.g. Firebase RTDB permission denied) */}
+      {error && (
+        <div className="p-5 rounded-[18px] bg-red-50 border border-red-200 text-sm text-red-800 space-y-2">
+          <div className="flex items-center gap-2 font-medium">
+            <Icon name="error" className="text-[20px] text-[#DC2626]" />
+            <span>Unable to load job applications from Firebase</span>
+          </div>
+          <p className="text-xs text-red-700">{error}</p>
+          <p className="text-xs text-red-700">
+            Make sure your Firebase Realtime Database rules allow authenticated admins to read/write{' '}
+            <code className="px-1.5 py-0.5 rounded bg-red-100 text-red-900">jobApplications</code>.
+          </p>
+        </div>
+      )}
 
       {/* Summary KPI Row */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -347,7 +364,7 @@ export default function JobApplicationsPage() {
                         </td>
 
                         <td className="py-4 px-4">
-                          {data.resumeURL ? (
+                          {isSafeFirebaseStorageUrl(data.resumeURL) ? (
                             <a
                               href={data.resumeURL}
                               target="_blank"
@@ -420,7 +437,8 @@ export default function JobApplicationsPage() {
         >
           <DialogContent
             showCloseButton={false}
-            className="sm:max-w-[780px] w-[95vw] p-0 overflow-hidden border border-[#E5E7EB] bg-[#FAFBFF] rounded-[20px] shadow-2xl max-h-[90vh] flex flex-col"
+            data-lenis-prevent
+            className="sm:max-w-[780px] w-[95vw] p-0 gap-0 overflow-hidden border border-[#E5E7EB] bg-[#FAFBFF] rounded-[20px] shadow-2xl max-h-[90vh] flex flex-col"
           >
             <DialogTitle className="sr-only">
               Job Application — {selectedRecord.data.fullName}
@@ -466,7 +484,10 @@ export default function JobApplicationsPage() {
             </div>
 
             {/* Modal Body */}
-            <div className="flex-1 overflow-y-auto p-6 space-y-5">
+            <div
+              data-lenis-prevent
+              className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-5 sm:p-6 space-y-5"
+            >
               {/* Status Update Bar */}
               <div className="bg-white border border-[#E5E7EB] rounded-[16px] p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div className="text-xs text-[#5F6368]">
@@ -583,7 +604,7 @@ export default function JobApplicationsPage() {
 
                 <div className="pt-3 border-t border-[#E5E7EB]/70">
                   <p className="text-xs text-[#8A8F98] mb-2">Uploaded Resume / CV</p>
-                  {selectedRecord.data.resumeURL ? (
+                  {isSafeFirebaseStorageUrl(selectedRecord.data.resumeURL) ? (
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 rounded-xl bg-[#FAFBFF] border border-[#E5E7EB]">
                       <div className="flex items-center gap-3 min-w-0">
                         <div className="h-9 w-9 rounded-xl bg-[#F3F0FA] text-[#2a1b63] flex items-center justify-center shrink-0">

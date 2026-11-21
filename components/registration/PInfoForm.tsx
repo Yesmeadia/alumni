@@ -108,11 +108,28 @@ const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({
               <Input
                 id="mobileNumber"
                 name="mobileNumber"
+                type="tel"
                 value={formData.mobileNumber || ''}
                 onChange={handleInputChange}
                 placeholder="10-digit Mobile Number"
                 maxLength={10}
                 required
+                className={inputClass}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="email" className="text-sm font-semibold text-[#212529]">
+                Email Address
+              </Label>
+              <Input
+                id="email"
+                name="email"
+                type="email"
+                value={formData.email || ''}
+                onChange={handleInputChange}
+                placeholder="Email Address"
+                maxLength={160}
                 className={inputClass}
               />
             </div>

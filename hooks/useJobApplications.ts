@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { ref, onValue, off, update, remove } from 'firebase/database';
+import { ref, onValue, update, remove, get, set } from 'firebase/database';
 import { database } from '@/lib/firebase';
 import { JobApplicationData, JobApplicationStatus } from '@/lib/types';
 
@@ -13,34 +13,51 @@ export interface JobApplicationRecord {
 export function useJobApplications() {
   const [applications, setApplications] = useState<JobApplicationRecord[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const appsRef = ref(database, 'jobApplications');
 
-    const unsubscribe = onValue(appsRef, (snapshot) => {
-      const raw = snapshot.val();
-      if (raw && typeof raw === 'object') {
-        const list: JobApplicationRecord[] = [];
-        Object.entries(raw).forEach(([id, entry]) => {
-          if (entry && typeof entry === 'object') {
-            list.push({ id, data: entry as JobApplicationData });
-          }
-        });
+    const unsubscribe = onValue(
+      appsRef,
+      (snapshot) => {
+        const raw = snapshot.val();
+        if (raw && typeof raw === 'object') {
+          const list: JobApplicationRecord[] = [];
+          Object.entries(raw).forEach(([id, entry]) => {
+            if (entry && typeof entry === 'object') {
+              list.push({ id, data: entry as JobApplicationData });
+            }
+          });
 
-        list.sort((a, b) => {
-          const ta = a.data.createdAt || (a.data.appliedAt ? new Date(a.data.appliedAt).getTime() : 0);
-          const tb = b.data.createdAt || (b.data.appliedAt ? new Date(b.data.appliedAt).getTime() : 0);
-          return tb - ta;
-        });
+          list.sort((a, b) => {
+            const ta =
+              a.data.createdAt ||
+              (a.data.appliedAt ? new Date(a.data.appliedAt).getTime() : 0);
+            const tb =
+              b.data.createdAt ||
+              (b.data.appliedAt ? new Date(b.data.appliedAt).getTime() : 0);
+            return tb - ta;
+          });
 
-        setApplications(list);
-      } else {
-        setApplications([]);
+          setApplications(list);
+        } else {
+          setApplications([]);
+        }
+        setError(null);
+        setLoading(false);
+      },
+      (err) => {
+        console.error('Failed to load jobApplications:', err);
+        setError(
+          err?.message ||
+            'Permission denied while reading jobApplications from Firebase Realtime Database.'
+        );
+        setLoading(false);
       }
-      setLoading(false);
-    });
+    );
 
-    return () => off(appsRef, 'value', unsubscribe);
+    return () => unsubscribe();
   }, []);
 
   const counts = useMemo(() => {
@@ -66,19 +83,40 @@ export function useJobApplications() {
   }, [applications]);
 
   const updateApplicationStatus = async (id: string, status: JobApplicationStatus) => {
-    await update(ref(database, `jobApplications/${id}`), {
+    const safeId = typeof id === 'string' ? id.trim() : '';
+    if (!safeId || safeId.includes('/') || safeId.includes('..')) {
+      throw new Error('Refusing update: invalid or empty application ID.');
+    }
+    await update(ref(database, `jobApplications/${safeId}`), {
       status,
       updatedAt: Date.now(),
     });
   };
 
   const deleteApplication = async (id: string) => {
-    await remove(ref(database, `jobApplications/${id}`));
+    const safeId = typeof id === 'string' ? id.trim() : '';
+    if (!safeId || safeId.includes('/') || safeId.includes('..')) {
+      throw new Error('Refusing delete: invalid or empty application ID.');
+    }
+    const targetRef = ref(database, `jobApplications/${safeId}`);
+    try {
+      const snap = await get(targetRef);
+      if (snap.exists()) {
+        await set(ref(database, `deletedJobApplications/${safeId}`), {
+          ...snap.val(),
+          deletedAt: new Date().toISOString(),
+        });
+      }
+    } catch {
+      // Continue if deletedJobApplications rule is not yet published
+    }
+    await remove(targetRef);
   };
 
   return {
     applications,
     loading,
+    error,
     counts,
     updateApplicationStatus,
     deleteApplication,

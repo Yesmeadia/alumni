@@ -21,6 +21,8 @@ import AlumniGridCard from '@/components/Dashboard/AlumniGridCard';
 import AlumniDetailsDialog from '@/components/Dashboard/AlumniDetailsDialog';
 import EditAlumniDialog from '@/components/Dashboard/EditAlumniDialog';
 import ExportExcelDialog from '@/components/Dashboard/ExportExcelDialog';
+import ImportExcelDialog from '@/components/Dashboard/ImportExcelDialog';
+import RestoreStoragePhotosDialog from '@/components/Dashboard/RestoreStoragePhotosDialog';
 import LoadingSpinner from '@/components/Dashboard/LoadingSpinner';
 
 const ITEMS_PER_PAGE = 20;
@@ -51,6 +53,8 @@ function RegistrationsContent() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isExportOpen, setIsExportOpen] = useState(false);
+  const [isImportOpen, setIsImportOpen] = useState(false);
+  const [isRestorePhotosOpen, setIsRestorePhotosOpen] = useState(false);
 
   const filteredAlumni = useMemo(() => {
     let result = alumniList;
@@ -130,9 +134,14 @@ function RegistrationsContent() {
   };
 
   const handleDeleteAlumni = async (id: string) => {
+    const safeId = typeof id === 'string' ? id.trim() : '';
+    if (!safeId) {
+      console.error('Blocked delete with empty alumni ID');
+      return;
+    }
     if (!window.confirm('Permanently delete this alumni profile?')) return;
     try {
-      await deleteAlumni(id);
+      await deleteAlumni(safeId);
       setIsDialogOpen(false);
     } catch (e) {
       console.error('Delete failed', e);
@@ -153,6 +162,24 @@ function RegistrationsContent() {
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2.5">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => setIsRestorePhotosOpen(true)}
+            className="h-11 px-4 rounded-xl border-[#E5E7EB] bg-white text-[#1D1E20] hover:bg-[#F3F0FA] hover:text-[#2a1b63] text-sm"
+          >
+            <Icon name="photo_library" className="text-[18px] mr-2" />
+            Restore Photos
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => setIsImportOpen(true)}
+            className="h-11 px-4 rounded-xl border-[#E5E7EB] bg-white text-[#1D1E20] hover:bg-[#F3F0FA] hover:text-[#2a1b63] text-sm"
+          >
+            <Icon name="upload_file" className="text-[18px] mr-2" />
+            Import Excel
+          </Button>
           <Button
             type="button"
             variant="outline"
@@ -355,7 +382,7 @@ function RegistrationsContent() {
                 {paginatedAlumni.map((alumni, index) => (
                   <AlumniTableRow
                     key={alumni.id}
-                    alumni={{ id: alumni.id, ...alumni.data }}
+                    alumni={{ ...alumni.data, id: alumni.id }}
                     index={index}
                     onClick={() => handleViewDetails(alumni)}
                     onEdit={handleEditAlumni}
@@ -370,7 +397,7 @@ function RegistrationsContent() {
             {paginatedAlumni.map((alumni, index) => (
               <AlumniGridCard
                 key={alumni.id}
-                alumni={{ id: alumni.id, ...alumni.data }}
+                alumni={{ ...alumni.data, id: alumni.id }}
                 index={index}
                 onClick={() => handleViewDetails(alumni)}
               />
@@ -393,7 +420,7 @@ function RegistrationsContent() {
                 disabled={currentPage === 1}
                 className="h-9 px-4 rounded-xl text-xs border-[#E5E7EB]"
               >
-                &larr; Previous
+                Previous
               </Button>
               <Button
                 type="button"
@@ -403,7 +430,7 @@ function RegistrationsContent() {
                 disabled={currentPage === totalPages}
                 className="h-9 px-4 rounded-xl text-xs border-[#E5E7EB]"
               >
-                Next &rarr;
+                Next
               </Button>
             </div>
           </div>
@@ -434,6 +461,12 @@ function RegistrationsContent() {
           gender: selectedGender,
           state: selectedState,
         }}
+      />
+      <ImportExcelDialog isOpen={isImportOpen} onOpenChange={setIsImportOpen} />
+      <RestoreStoragePhotosDialog
+        isOpen={isRestorePhotosOpen}
+        onOpenChange={setIsRestorePhotosOpen}
+        alumniList={alumniList}
       />
     </div>
   );

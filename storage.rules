@@ -1,0 +1,50 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    match /photos/{imageId} {
+      allow read: if true;
+      allow write: if request.time < timestamp.date(2026, 6, 18);
+    }
+
+    match /feedback/{audioId} {
+      allow read: if true;
+      allow write: if request.time < timestamp.date(2026, 6, 18);
+    }
+
+    match /applicants/{imageId} {
+      allow read: if true;
+      allow write: if request.time < timestamp.date(2026, 6, 18);
+    }
+
+    // Alumni profile photos (JPG, PNG, WebP only, max 5MB — blocks SVG)
+    match /alumni-photos/{fileName} {
+      allow read: if true;
+      allow write: if request.resource != null
+                   && request.resource.size > 0
+                   && request.resource.size <= 5 * 1024 * 1024
+                   && (
+                     request.resource.contentType == 'image/jpeg' ||
+                     request.resource.contentType == 'image/png' ||
+                     request.resource.contentType == 'image/webp'
+                   );
+    }
+
+    // Job application resumes (PDF, DOC, DOCX only, max 5MB)
+    match /job-resumes/{fileName} {
+      allow read: if true;
+      allow write: if request.resource != null
+                   && request.resource.size > 0
+                   && request.resource.size <= 5 * 1024 * 1024
+                   && (
+                     request.resource.contentType == 'application/pdf' ||
+                     request.resource.contentType == 'application/msword' ||
+                     request.resource.contentType == 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+                   );
+    }
+
+    match /{allPaths=**} {
+      allow read: if true;
+      allow write: if false;
+    }
+  }
+}

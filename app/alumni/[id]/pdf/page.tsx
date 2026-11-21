@@ -91,7 +91,7 @@ export default function AlumniPDFPage() {
             <div className="max-w-[210mm] mx-auto mb-6 flex justify-between items-center no-print">
                 <Button variant="ghost" onClick={() => router.back()}
                     className="gap-2 font-semibold text-gray-500 hover:text-gray-900 rounded-xl text-sm">
-                    <Icon name="arrow_back" className="h-4 w-4" /> Back
+                    Back
                 </Button>
                 <div className="flex gap-3">
                     <Button onClick={() => router.push(`/alumni/${id}/id-card`)} variant="outline"

@@ -54,7 +54,7 @@ export default function AdminHeader({ onOpenMobileNav }: AdminHeaderProps) {
       </div>
 
       <div className="flex items-center gap-3 sm:gap-4">
-        <Link href="/" target="_blank" className="hidden sm:inline-flex">
+        <Link href="/" target="_blank" rel="noopener noreferrer" className="hidden sm:inline-flex">
           <Button
             variant="outline"
             size="sm"

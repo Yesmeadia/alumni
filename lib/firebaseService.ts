@@ -1,29 +1,41 @@
 import { ref, push, set, get } from 'firebase/database';
 import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { database, storage } from './firebase';
-import { sanitizeFilename } from './security';
+import {
+  sanitizeFilename,
+  sanitizeText,
+  sanitizeMultilineText,
+  validateImageMagicBytes,
+  validateResumeMagicBytes,
+} from './security';
 import { AlumniData, JobApplicationData } from './types';
 
 const ALLOWED_IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
+const ALLOWED_IMAGE_EXTS = new Set(['jpg', 'jpeg', 'png', 'webp']);
 const ALLOWED_RESUME_TYPES = new Set([
   'application/pdf',
   'application/msword',
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
 ]);
+const ALLOWED_RESUME_EXTS = new Set(['pdf', 'doc', 'docx']);
 const MAX_UPLOAD_BYTES = 5 * 1024 * 1024; // 5MB
 
 interface AlumniRegistrationData {
   fullName: string;
+  gender?: string;
   address: string;
   place: string;
   state: string;
+  district?: string;
   pinCode: string;
   mobileNumber: string;
   whatsappNumber: string;
+  email?: string;
   facebookLink?: string;
   instagramLink?: string;
   twitterLink?: string;
   linkedinLink?: string;
+  otherSocialLink?: string;
   schoolAttended: string;
   yearOfGraduation: string;
   lastClassAttended: string;
@@ -32,48 +44,54 @@ interface AlumniRegistrationData {
   additionalQualification?: string;
   currentJobTitle: string;
   companyName: string;
+  industry?: string;
+  yearsOfExperience?: string;
+  areasOfExpertise?: string;
+  professionalInterests?: string;
   stayInvolved: string[];
   messageToTeacher?: string;
+  status?: 'pending' | 'approved' | 'rejected';
   photoURL: string;
   registrationDate: string;
+  createdAt?: number;
 }
+
+const getFileExt = (name: string): string => {
+  const parts = name.toLowerCase().split('.');
+  return parts.length > 1 ? parts[parts.length - 1] : '';
+};
 
 export const uploadImageToStorage = async (
   file: File | null,
   userId: string
 ): Promise<string> => {
+  if (!file) return '';
+
+  const ext = getFileExt(file.name);
+  if (!ALLOWED_IMAGE_TYPES.has(file.type) || !ALLOWED_IMAGE_EXTS.has(ext)) {
+    throw new Error('Only PNG, JPG, and WebP images are allowed.');
+  }
+  if (file.size <= 0 || file.size > MAX_UPLOAD_BYTES) {
+    throw new Error('Image size must be between 1 byte and 5MB.');
+  }
+
+  const validSignature = await validateImageMagicBytes(file);
+  if (!validSignature) {
+    throw new Error('Invalid image file content. Please upload a genuine PNG, JPG, or WebP photo.');
+  }
+
   try {
-    // If no file is provided, return empty string
-    if (!file) {
-      console.log('No image file provided, skipping upload');
-      return '';
-    }
-
-    console.log('Uploading image:', file.name);
-    
-    if (!ALLOWED_IMAGE_TYPES.has(file.type)) {
-      throw new Error('Only PNG, JPG, and WebP images are allowed.');
-    }
-    if (file.size > MAX_UPLOAD_BYTES) {
-      throw new Error('Image size must not exceed 5MB.');
-    }
-
-    // Create a unique sanitized filename
     const timestamp = Date.now();
     const safeName = sanitizeFilename(file.name, 'photo.jpg');
-    const fileName = `alumni-photos/${userId}_${timestamp}_${safeName}`;
-    
-    // Create storage reference
+    const fileName = `alumni-photos/${sanitizeFilename(userId, 'user')}_${timestamp}_${safeName}`;
+
     const imageRef = storageRef(storage, fileName);
-    
-    // Upload file
-    const snapshot = await uploadBytes(imageRef, file);
-    
-    // Get download URL
-    const downloadURL = await getDownloadURL(snapshot.ref);
-    
-    console.log('Image uploaded successfully:', downloadURL);
-    return downloadURL;
+    const snapshot = await uploadBytes(imageRef, file, {
+      contentType: file.type,
+      contentDisposition: `inline; filename="${safeName}"`,
+    });
+
+    return await getDownloadURL(snapshot.ref);
   } catch (error) {
     console.error('Error uploading image:', error);
     throw new Error('Failed to upload image. Please try again.');
@@ -85,29 +103,48 @@ export const saveAlumniData = async (
   photoURL: string
 ): Promise<string> => {
   try {
-    console.log('Saving alumni data to database...');
-    
-    // Create reference to alumni collection
     const alumniRef = ref(database, 'alumni');
-    
-    // Create new alumni entry with auto-generated key
     const newAlumniRef = push(alumniRef);
-    
-    // Prepare data with photo URL and registration date
-    const alumniData: AlumniRegistrationData = {
-      ...data,
-      photoURL,
+
+    const sanitizedData: AlumniRegistrationData = {
+      fullName: sanitizeText(data.fullName, 120),
+      gender: sanitizeText(data.gender, 20),
+      address: sanitizeMultilineText(data.address, 400),
+      place: sanitizeText(data.place, 100),
+      state: sanitizeText(data.state, 80),
+      district: sanitizeText(data.district, 80),
+      pinCode: sanitizeText(data.pinCode, 12).replace(/[^0-9]/g, ''),
+      mobileNumber: sanitizeText(data.mobileNumber, 20).replace(/[^0-9+\- ]/g, ''),
+      whatsappNumber: sanitizeText(data.whatsappNumber, 20).replace(/[^0-9+\- ]/g, ''),
+      email: sanitizeText(data.email, 160),
+      facebookLink: sanitizeText(data.facebookLink, 250),
+      instagramLink: sanitizeText(data.instagramLink, 250),
+      twitterLink: sanitizeText(data.twitterLink, 250),
+      linkedinLink: sanitizeText(data.linkedinLink, 250),
+      otherSocialLink: sanitizeText(data.otherSocialLink, 250),
+      schoolAttended: sanitizeText(data.schoolAttended, 180),
+      yearOfGraduation: sanitizeText(data.yearOfGraduation, 10),
+      lastClassAttended: sanitizeText(data.lastClassAttended, 40),
+      otherClass: sanitizeText(data.otherClass, 80),
+      qualification: sanitizeText(data.qualification, 120),
+      additionalQualification: sanitizeText(data.additionalQualification, 160),
+      currentJobTitle: sanitizeText(data.currentJobTitle, 120),
+      companyName: sanitizeText(data.companyName, 140),
+      industry: sanitizeText(data.industry, 100),
+      yearsOfExperience: sanitizeText(data.yearsOfExperience, 30),
+      areasOfExpertise: sanitizeText(data.areasOfExpertise, 300),
+      professionalInterests: sanitizeMultilineText(data.professionalInterests, 500),
+      stayInvolved: Array.isArray(data.stayInvolved)
+        ? data.stayInvolved.map((v) => sanitizeText(v, 80)).filter(Boolean).slice(0, 10)
+        : [],
+      messageToTeacher: sanitizeMultilineText(data.messageToTeacher, 1500),
+      status: 'pending',
+      photoURL: sanitizeText(photoURL, 1000),
       registrationDate: new Date().toISOString(),
+      createdAt: Date.now(),
     };
-    
-    console.log('Alumni data to save:', alumniData);
-    
-    // Save to database
-    await set(newAlumniRef, alumniData);
-    
-    console.log('Alumni data saved successfully with ID:', newAlumniRef.key);
-    
-    // Return the generated key
+
+    await set(newAlumniRef, sanitizedData);
     return newAlumniRef.key || '';
   } catch (error) {
     console.error('Error saving alumni data:', error);
@@ -115,46 +152,97 @@ export const saveAlumniData = async (
   }
 };
 
+export const checkDuplicateAlumni = async (
+  mobileNumber: string,
+  email?: string
+): Promise<{ duplicateMobile: boolean; duplicateEmail: boolean }> => {
+  const targetPhone = normalizePhone(mobileNumber);
+  const targetEmail = sanitizeText(email, 160).toLowerCase();
+
+  if (targetPhone.length < 7 && !targetEmail) {
+    return { duplicateMobile: false, duplicateEmail: false };
+  }
+
+  const snapshot = await get(ref(database, 'alumni'));
+  const raw = snapshot.val();
+  if (!raw || typeof raw !== 'object') {
+    return { duplicateMobile: false, duplicateEmail: false };
+  }
+
+  let duplicateMobile = false;
+  let duplicateEmail = false;
+
+  Object.values(raw).forEach((entry) => {
+    if (!entry || typeof entry !== 'object') return;
+    const alumni = entry as AlumniData;
+
+    if (
+      targetPhone.length >= 7 &&
+      (normalizePhone(alumni.mobileNumber) === targetPhone ||
+        normalizePhone(alumni.whatsappNumber) === targetPhone)
+    ) {
+      duplicateMobile = true;
+    }
+
+    if (
+      targetEmail &&
+      alumni.email &&
+      alumni.email.trim().toLowerCase() === targetEmail
+    ) {
+      duplicateEmail = true;
+    }
+  });
+
+  return { duplicateMobile, duplicateEmail };
+};
+
 export const registerAlumni = async (
   formData: Omit<AlumniRegistrationData, 'photoURL' | 'registrationDate'>,
   imageFile: File | null
-): Promise<{ success: boolean; alumniId: string; message: string }> => {
+): Promise<{ success: boolean; alumniId: string; photoURL?: string; message: string }> => {
   try {
-    console.log('=== registerAlumni function started ===');
-    console.log('Form data received:', formData);
-    console.log('Image file received:', imageFile ? imageFile.name : 'No image');
-    
-    // Generate a unique ID for this registration
-    const tempUserId = `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    console.log('Generated temp user ID:', tempUserId);
-    
-    // Step 1: Upload image to Firebase Storage (optional)
+    const { duplicateMobile, duplicateEmail } = await checkDuplicateAlumni(
+      formData.mobileNumber,
+      formData.email
+    );
+    if (duplicateMobile && duplicateEmail) {
+      return {
+        success: false,
+        alumniId: '',
+        message: 'This mobile number and email address are already registered.',
+      };
+    }
+    if (duplicateMobile) {
+      return {
+        success: false,
+        alumniId: '',
+        message: 'This mobile number is already registered on the alumni portal.',
+      };
+    }
+    if (duplicateEmail) {
+      return {
+        success: false,
+        alumniId: '',
+        message: 'This email address is already registered on the alumni portal.',
+      };
+    }
+
+    const tempUserId = `${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
+
     let photoURL = '';
     if (imageFile) {
-      console.log('Uploading image to storage...');
       photoURL = await uploadImageToStorage(imageFile, tempUserId);
-      console.log('Image uploaded, URL:', photoURL);
-    } else {
-      console.log('No image to upload, proceeding without photo');
     }
-    
-    // Step 2: Save alumni data with photo URL to Realtime Database
-    console.log('Saving alumni data to database...');
+
     const alumniId = await saveAlumniData(formData, photoURL);
-    console.log('Alumni data saved with ID:', alumniId);
-    
-    console.log('=== registerAlumni function completed successfully ===');
-    
+
     return {
       success: true,
       alumniId,
+      photoURL,
       message: 'Registration completed successfully!',
     };
   } catch (error) {
-    console.error('=== Error during registration ===');
-    console.error('Error details:', error);
-    
-    // Return error response instead of throwing
     return {
       success: false,
       alumniId: '',
@@ -173,7 +261,7 @@ export const lookupRegisteredAlumni = async (
   nameQuery?: string
 ): Promise<Array<{ id: string; data: AlumniData }>> => {
   const normalizedTarget = normalizePhone(mobileNumber);
-  const cleanedName = (nameQuery || '').trim().toLowerCase();
+  const cleanedName = sanitizeText(nameQuery, 120).toLowerCase();
 
   if (normalizedTarget.length < 7 && !cleanedName) {
     return [];
@@ -214,25 +302,38 @@ export const uploadResumeToStorage = async (
   file: File,
   alumniId: string
 ): Promise<{ url: string; fileName: string }> => {
-  if (!ALLOWED_RESUME_TYPES.has(file.type)) {
+  const ext = getFileExt(file.name);
+  if (!ALLOWED_RESUME_TYPES.has(file.type) || !ALLOWED_RESUME_EXTS.has(ext)) {
     throw new Error('Only PDF, DOC, and DOCX resume files are allowed.');
   }
-  if (file.size > MAX_UPLOAD_BYTES) {
-    throw new Error('Resume file size must not exceed 5MB.');
+  if (file.size <= 0 || file.size > MAX_UPLOAD_BYTES) {
+    throw new Error('Resume file size must be between 1 byte and 5MB.');
+  }
+
+  const validSignature = await validateResumeMagicBytes(file);
+  if (!validSignature) {
+    throw new Error('Invalid resume file content. Please upload a valid PDF, DOC, or DOCX file.');
   }
 
   const timestamp = Date.now();
   const safeName = sanitizeFilename(file.name, 'resume.pdf');
-  const path = `job-resumes/${alumniId}_${timestamp}_${safeName}`;
+  const safeAlumniId = sanitizeFilename(alumniId, 'alumni');
+  const path = `job-resumes/${safeAlumniId}_${timestamp}_${safeName}`;
   const fileRef = storageRef(storage, path);
-  const snapshot = await uploadBytes(fileRef, file);
+  const snapshot = await uploadBytes(fileRef, file, {
+    contentType: file.type,
+    contentDisposition: `attachment; filename="${safeName}"`,
+  });
   const url = await getDownloadURL(snapshot.ref);
 
   return { url, fileName: safeName };
 };
 
 export const submitJobApplication = async (
-  application: Omit<JobApplicationData, 'id' | 'appliedAt' | 'createdAt' | 'status' | 'resumeURL' | 'resumeFileName'>,
+  application: Omit<
+    JobApplicationData,
+    'id' | 'appliedAt' | 'createdAt' | 'status' | 'resumeURL' | 'resumeFileName'
+  >,
   resumeFile?: File | null
 ): Promise<{ success: boolean; applicationId: string; message: string }> => {
   try {
@@ -250,7 +351,24 @@ export const submitJobApplication = async (
     const now = Date.now();
 
     const payload: Omit<JobApplicationData, 'id'> = {
-      ...application,
+      alumniId: sanitizeText(application.alumniId, 100),
+      fullName: sanitizeText(application.fullName, 120),
+      mobileNumber: sanitizeText(application.mobileNumber, 20).replace(/[^0-9+\- ]/g, ''),
+      whatsappNumber: sanitizeText(application.whatsappNumber, 20).replace(/[^0-9+\- ]/g, ''),
+      email: sanitizeText(application.email, 160),
+      schoolAttended: sanitizeText(application.schoolAttended, 180),
+      yearOfGraduation: sanitizeText(application.yearOfGraduation, 10),
+      qualification: sanitizeText(application.qualification, 120),
+      photoURL: sanitizeText(application.photoURL, 1000),
+      positionApplied: sanitizeText(application.positionApplied, 120),
+      preferredLocation: sanitizeText(application.preferredLocation, 120),
+      willingForAbroad: application.willingForAbroad === 'Yes' ? 'Yes' : 'No',
+      jobType: application.jobType,
+      experienceYears: sanitizeText(application.experienceYears, 40) || 'Fresher',
+      expectedSalary: sanitizeText(application.expectedSalary, 60),
+      noticePeriod: sanitizeText(application.noticePeriod, 40),
+      skills: sanitizeText(application.skills, 400),
+      coverNote: sanitizeMultilineText(application.coverNote, 2000),
       resumeURL,
       resumeFileName,
       status: 'pending',

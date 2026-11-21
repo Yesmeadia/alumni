@@ -36,13 +36,20 @@ export const REGISTRATION_STEPS: RegistrationStep[] = [
   },
   {
     number: 5,
+    shortTitle: 'Job Apply',
+    title: 'Job Application',
+    description: 'Optionally submit a job application along with your alumni registration.',
+    optional: true,
+  },
+  {
+    number: 6,
     shortTitle: 'Connect',
     title: 'Community Involvement',
     description: 'Choose how you would like to participate and leave a note for your teachers.',
     optional: true,
   },
   {
-    number: 6,
+    number: 7,
     shortTitle: 'Review',
     title: 'Review & Submit',
     description: 'Verify your registration summary before submitting your application.',

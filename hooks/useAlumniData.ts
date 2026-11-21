@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { ref, onValue, off, remove, update } from 'firebase/database';
+import { ref, onValue, remove, update, get, set } from 'firebase/database';
 import { database } from '@/lib/firebase';
 import { AlumniData } from '@/lib/types';
 
@@ -23,9 +23,10 @@ export function useAlumniData() {
         const list: AlumniRecord[] = [];
         Object.entries(data).forEach(([firebaseKey, alumniData]) => {
           if (typeof alumniData === 'object' && alumniData !== null) {
+            const { id: _ignoredId, ...cleanFields } = alumniData as AlumniData;
             list.push({
               id: firebaseKey,
-              data: alumniData as AlumniData,
+              data: cleanFields as AlumniData,
             });
           }
         });
@@ -43,7 +44,7 @@ export function useAlumniData() {
       setLoading(false);
     });
 
-    return () => off(alumniRef, 'value', unsubscribe);
+    return () => unsubscribe();
   }, []);
 
   const derived = useMemo(() => {
@@ -86,15 +87,36 @@ export function useAlumniData() {
   }, [alumniList]);
 
   const updateAlumni = async (id: string, data: Partial<AlumniData>) => {
+    const safeId = typeof id === 'string' ? id.trim() : '';
+    if (!safeId || safeId.includes('/') || safeId.includes('..')) {
+      throw new Error('Refusing update: invalid or empty alumni ID.');
+    }
     const { id: _, ...cleanData } = data as any;
-    await update(ref(database, `alumni/${id}`), {
+    await update(ref(database, `alumni/${safeId}`), {
       ...cleanData,
       updatedAt: Date.now(),
     });
   };
 
   const deleteAlumni = async (id: string) => {
-    await remove(ref(database, `alumni/${id}`));
+    const safeId = typeof id === 'string' ? id.trim() : '';
+    if (!safeId || safeId.includes('/') || safeId.includes('..')) {
+      throw new Error('Refusing delete: invalid or empty alumni ID.');
+    }
+    const targetRef = ref(database, `alumni/${safeId}`);
+    // Soft-archive a backup copy before removing so accidental deletes are recoverable
+    try {
+      const snap = await get(targetRef);
+      if (snap.exists()) {
+        await set(ref(database, `deletedAlumni/${safeId}`), {
+          ...snap.val(),
+          deletedAt: new Date().toISOString(),
+        });
+      }
+    } catch {
+      // Continue if deletedAlumni rule is not yet published
+    }
+    await remove(targetRef);
   };
 
   return {

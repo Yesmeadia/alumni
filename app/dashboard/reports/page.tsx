@@ -109,6 +109,25 @@ export default function ReportsPage() {
     exportAlumniToCSV(list, filename);
   };
 
+  const handleDownloadJsonBackup = () => {
+    if (alumniList.length === 0) return;
+    const backupMap: Record<string, any> = {};
+    alumniList.forEach(({ id, data }) => {
+      if (id) backupMap[id] = data;
+    });
+    const blob = new Blob([JSON.stringify(backupMap, null, 2)], {
+      type: 'application/json;charset=utf-8;',
+    });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `yes-india-alumni-full-backup-${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+  };
+
   const saasCardClass =
     'bg-white border border-[#E5E7EB] rounded-[18px] shadow-[0_4px_20px_-4px_rgba(29,30,32,0.05)] overflow-hidden';
 
@@ -294,6 +313,16 @@ export default function ReportsPage() {
             </div>
 
             <div className="flex flex-wrap items-center gap-2.5">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleDownloadJsonBackup}
+                disabled={alumniList.length === 0 || exporting}
+                className="h-10 px-4 rounded-xl border-[#E5E7EB] bg-white text-[#1D1E20] hover:bg-[#F3F0FA] hover:text-[#2a1b63]"
+              >
+                <Icon name="backup" className="text-[18px] mr-2" />
+                Full JSON Backup
+              </Button>
               <Button
                 type="button"
                 variant="outline"

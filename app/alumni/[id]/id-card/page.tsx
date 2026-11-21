@@ -99,7 +99,7 @@ export default function AlumniIDCardPage() {
             <div className="no-print mb-10 flex justify-between items-center" style={{ width: '220px' }}>
                 <Button variant="ghost" onClick={() => router.back()}
                     className="gap-2 font-semibold text-gray-500 hover:text-gray-900 rounded-xl text-sm">
-                    <Icon name="arrow_back" className="h-4 w-4" /> Back
+                    Back
                 </Button>
                 <Button onClick={() => window.print()}
                     className="bg-gray-900 hover:bg-gray-800 text-white rounded-xl gap-2 font-semibold px-5 text-sm">
