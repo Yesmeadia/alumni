@@ -10,8 +10,8 @@ export const SITE_CONFIG = {
   subtitle: 'Alumni Network',
   tagline: 'YES India Makes an Excellent India',
   mainWebsite: 'https://web.yesindiafoundation.com',
-  email: 'info@yesindiafoundation.com',
-  phone: '+91 989 566 2111',
+  email: 'yesalumni11@gmail.com',
+  phone: '+91 60054 75312',
   offices: {
     registered: {
       title: 'Registered Office',

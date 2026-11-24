@@ -42,7 +42,7 @@ export default async function RootLayout({
           href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,200..700,0..1,-50..200&display=swap"
         />
       </head>
-      <body className="font-sans font-[400] antialiased">
+      <body className="font-sans font-[400] antialiased" suppressHydrationWarning>
         <SmoothScrolling>
           <AuthProvider>
             {children}
